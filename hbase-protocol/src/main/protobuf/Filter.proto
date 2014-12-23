@@ -156,3 +156,12 @@ message WhileMatchFilter {
 }
 message FilterAllFilter {
 }
+
+message RowKeyRange {
+  optional bytes start_row = 1;
+  optional bytes stop_row = 2;
+}
+
+message MultiRowRangeFilter {
+  repeated RowKeyRange row_key_range_list = 1;
+}
