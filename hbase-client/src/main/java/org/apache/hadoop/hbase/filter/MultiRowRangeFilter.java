@@ -61,8 +61,7 @@ public class MultiRowRangeFilter extends FilterBase {
    *           <code>RowKeyRange</code> is invalid
    */
   public MultiRowRangeFilter(List<RowKeyRange> list) throws IOException {
-    this.rangeList = list;
-    sortAndMerge(rangeList, true);
+    this.rangeList = sortAndMerge(list);
   }
 
   @Override
@@ -72,12 +71,6 @@ public class MultiRowRangeFilter extends FilterBase {
 
   @Override
   public boolean filterRowKey(byte[] buffer, int offset, int length) {
-    // if no ranges, stop the scan.
-    if (rangeList.size() == 0) {
-      done = true;
-      currentReturnCode = ReturnCode.NEXT_ROW;
-      return false;
-    }
     // If it is the first time of running, calculate the current range index for
     // the row key. If index is out of bound which happens when the start row
     // user set is after the largest stop row of the ranges, stop the scan.
@@ -219,30 +212,39 @@ public class MultiRowRangeFilter extends FilterBase {
    *          the list of range to sort and merge.
    *
    */
-  private void sortAndMerge(List<RowKeyRange> ranges, boolean details) throws IOException {
+  public static List<RowKeyRange> sortAndMerge(List<RowKeyRange> ranges) throws IOException {
     if (ranges.size() == 0) {
-      throw new IOException("No ranges found.");
+      throw new IllegalArgumentException("No ranges found.");
     }
-    Collections.sort(ranges);
-
     List<RowKeyRange> invalidRanges = new ArrayList<RowKeyRange>();
-    List<Integer> overlaps = new ArrayList<Integer>();
-    List<RowKeyRange> newRanges = new ArrayList<RowKeyRange>();
-
-    if (!ranges.get(0).isValid())
+    List<RowKeyRange> newRanges = new ArrayList<RowKeyRange>(ranges.size());
+    Collections.sort(ranges);
+    if(ranges.get(0).isValid()) {
+      if (ranges.size() == 1) {
+        newRanges.add(ranges.get(0));
+      }
+    } else {
       invalidRanges.add(ranges.get(0));
-
+    }
     byte[] lastStartRow = ranges.get(0).startRow;
     byte[] lastStopRow = ranges.get(0).stopRow;
-
-    for (int i = 1; i < ranges.size(); i++) {
+    int i = 1;
+    for (; i < ranges.size(); i++) {
       RowKeyRange range = ranges.get(i);
-
-      if (!range.isValid())
+      if (!range.isValid()) {
         invalidRanges.add(range);
-
+      }
+      if(Bytes.equals(lastStopRow, HConstants.EMPTY_BYTE_ARRAY)) {
+        newRanges.add(new RowKeyRange(lastStartRow, lastStopRow));
+        break;
+      }
       // with overlap in the ranges
       if (Bytes.compareTo(lastStopRow, range.startRow) >= 0) {
+        if(Bytes.equals(range.stopRow, HConstants.EMPTY_BYTE_ARRAY)) {
+          newRanges.add(new RowKeyRange(lastStartRow, range.stopRow));
+          break;
+        }
+        // if first range contains second range, ignore the second range
         if (Bytes.compareTo(lastStopRow, range.stopRow) >= 0) {
           if ((i + 1) == ranges.size()) {
             newRanges.add(new RowKeyRange(lastStartRow, lastStopRow));
@@ -252,14 +254,25 @@ public class MultiRowRangeFilter extends FilterBase {
           if ((i + 1) < ranges.size()) {
             i++;
             range = ranges.get(i);
+            if (!range.isValid()) {
+              invalidRanges.add(range);
+            }
           } else {
             newRanges.add(new RowKeyRange(lastStartRow, lastStopRow));
             break;
           }
           while (Bytes.compareTo(lastStopRow, range.startRow) >= 0) {
+            if(Bytes.equals(range.stopRow, HConstants.EMPTY_BYTE_ARRAY)) {
+              break;
+            }
+            // if this first range contain second range, ignore the second range
             if (Bytes.compareTo(lastStopRow, range.stopRow) >= 0) {
-              if ((i + 1) > ranges.size()) {
-                newRanges.add(new RowKeyRange(lastStartRow, lastStopRow));
+              i++;
+              if (i < ranges.size()) {
+                range = ranges.get(i);
+                if (!range.isValid()) {
+                  invalidRanges.add(range);
+                }
               } else {
                 break;
               }
@@ -268,19 +281,32 @@ public class MultiRowRangeFilter extends FilterBase {
               i++;
               if (i < ranges.size()) {
                 range = ranges.get(i);
+                if (!range.isValid()) {
+                  invalidRanges.add(range);
+                }
               } else {
-                newRanges.add(new RowKeyRange(lastStartRow, lastStopRow));
                 break;
               }
+            }
+          }
+          if(Bytes.equals(range.stopRow, HConstants.EMPTY_BYTE_ARRAY)) {
+            if(Bytes.compareTo(lastStopRow, range.startRow) < 0)
+            {
+              newRanges.add(new RowKeyRange(lastStartRow, lastStopRow));
+              newRanges.add(range);
+            } else {
+              newRanges.add(new RowKeyRange(lastStartRow, range.stopRow));
+              break;
             }
           }
           newRanges.add(new RowKeyRange(lastStartRow, lastStopRow));
           lastStartRow = range.startRow;
           lastStopRow = range.stopRow;
+          if ((i + 1) == ranges.size()) {
+            newRanges.add(new RowKeyRange(lastStartRow, lastStopRow));
+          }
         }
-      }
-      // without overlap in the ranges
-      if (Bytes.compareTo(lastStopRow, range.startRow) < 0) {
+      } else {
         newRanges.add(new RowKeyRange(lastStartRow, lastStopRow));
         lastStartRow = range.startRow;
         lastStopRow = range.stopRow;
@@ -289,21 +315,34 @@ public class MultiRowRangeFilter extends FilterBase {
         }
       }
     }
+    // check the remaining ranges
+    for(int j=i; j < ranges.size(); j++) {
+      if(!ranges.get(j).isValid()) {
+        invalidRanges.add(ranges.get(j));
+      }
+    }
+    // if invalid range exists, throw the exception
+    if (invalidRanges.size() != 0) {
+      printInvalidRanges(invalidRanges, true);
+    }
+    // If no valid ranges found, throw the exception
+    if(newRanges.size() == 0) {
+      throw new IllegalArgumentException("No valid ranges found.");
+    }
+    return newRanges;
+  }
 
-    if (invalidRanges.size() != 0 || overlaps.size() != 0) {
+  private static void printInvalidRanges(List<RowKeyRange> invalidRanges, boolean details) {
       StringBuilder sb = new StringBuilder();
       sb.append(invalidRanges.size()).append(" invaild ranges.\n");
       if (details) {
         for (RowKeyRange range : invalidRanges) {
           sb.append(
-              "Invalid range: start row=>" + Bytes.toString(range.startRow) + ", stop row => "
-                  + Bytes.toString(range.startRow)).append('\n');
+              "Invalid range: start row => " + Bytes.toString(range.startRow) + ", stop row => "
+                  + Bytes.toString(range.stopRow)).append('\n');
         }
       }
-
-      throw new IOException(sb.toString());
-    }
-    this.rangeList = newRanges;
+      throw new IllegalArgumentException(sb.toString());
   }
 
   @InterfaceAudience.Public
@@ -316,6 +355,11 @@ public class MultiRowRangeFilter extends FilterBase {
     public RowKeyRange() {
     }
 
+    /**
+     * if the startRow is empty or null, set it to HConstants.EMPTY_BYTE_ARRAY, means begin at the
+     * start row of the table if the stopRow is empty or null, set it to
+     * HConstants.EMPTY_BYTE_ARRAY, means end of the last row of table
+     */
     public RowKeyRange(String startRow, String stopRow) {
       this((startRow == null || startRow.isEmpty()) ? HConstants.EMPTY_BYTE_ARRAY : Bytes
           .toBytes(startRow), (stopRow == null || stopRow.isEmpty()) ? HConstants.EMPTY_BYTE_ARRAY
@@ -323,9 +367,17 @@ public class MultiRowRangeFilter extends FilterBase {
     }
 
     public RowKeyRange(byte[] startRow, byte[] stopRow) {
-      this.startRow = startRow;
-      this.stopRow = stopRow;
+      this.startRow = (startRow == null) ? HConstants.EMPTY_BYTE_ARRAY : startRow;
+      this.stopRow = (stopRow == null) ? HConstants.EMPTY_BYTE_ARRAY :stopRow;
       isScan = Bytes.equals(startRow, stopRow) ? 1 : 0;
+    }
+
+    public byte[] getStartRow() {
+      return startRow;
+    }
+
+    public byte[] getStopRow() {
+      return stopRow;
     }
 
     public boolean contains(byte[] row) {
