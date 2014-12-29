@@ -222,14 +222,35 @@ public class TestMultiRowRangeFilter {
     scan.setMaxVersions();
 
     List<RowKeyRange> ranges = new ArrayList<RowKeyRange>();
-    ranges.add(new RowKeyRange(Bytes.toBytes(""), Bytes.toBytes("")));
-    ranges.add(new RowKeyRange(Bytes.toBytes(""), Bytes.toBytes(40)));
-
+    ranges.add(new RowKeyRange(Bytes.toBytes(""), Bytes.toBytes(10)));
+    ranges.add(new RowKeyRange(Bytes.toBytes(30), Bytes.toBytes(40)));
 
     MultiRowRangeFilter filter = new MultiRowRangeFilter(ranges);
     scan.setFilter(filter);
     int resultsSize = getResultsSize(ht, scan);
-    List<Cell> results1 = getScanResult(Bytes.toBytes(""), Bytes.toBytes(""), ht);
+    List<Cell> results1 = getScanResult(Bytes.toBytes(""), Bytes.toBytes(10), ht);
+    List<Cell> results2 = getScanResult(Bytes.toBytes(30), Bytes.toBytes(40), ht);
+    assertEquals(results1.size() + results2.size(), resultsSize);
+
+    ht.close();
+  }
+
+  @Test
+  public void testMultiRowRangeFilterWithEmptyStopRow() throws IOException {
+    tableName = Bytes.toBytes("testMultiRowRangeFilterWithEmptyStopRow");
+    HTable ht = TEST_UTIL.createTable(tableName, family, Integer.MAX_VALUE);
+    generateRows(numRows, ht, family, qf, value);
+    Scan scan = new Scan();
+    scan.setMaxVersions();
+
+    List<RowKeyRange> ranges = new ArrayList<RowKeyRange>();
+    ranges.add(new RowKeyRange(Bytes.toBytes(10), Bytes.toBytes("")));
+    ranges.add(new RowKeyRange(Bytes.toBytes(30), Bytes.toBytes(40)));
+
+    MultiRowRangeFilter filter = new MultiRowRangeFilter(ranges);
+    scan.setFilter(filter);
+    int resultsSize = getResultsSize(ht, scan);
+    List<Cell> results1 = getScanResult(Bytes.toBytes(10), Bytes.toBytes(""), ht);
     assertEquals(results1.size(), resultsSize);
 
     ht.close();

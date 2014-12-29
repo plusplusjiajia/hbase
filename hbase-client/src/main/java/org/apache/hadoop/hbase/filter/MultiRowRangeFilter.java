@@ -69,6 +69,10 @@ public class MultiRowRangeFilter extends FilterBase {
     return done;
   }
 
+  public List<RowKeyRange> getRowRanges() {
+    return this.rangeList;
+  }
+
   @Override
   public boolean filterRowKey(byte[] buffer, int offset, int length) {
     // If it is the first time of running, calculate the current range index for
@@ -85,12 +89,16 @@ public class MultiRowRangeFilter extends FilterBase {
         return false;
       }
       range = rangeList.get(index);
+      if (!initialized) {
+        if (range.contains(buffer, offset, length)) {
+          currentReturnCode = ReturnCode.INCLUDE;
+        } else {
+          currentReturnCode = ReturnCode.SEEK_NEXT_USING_HINT;
+        }
+      } else {
+        currentReturnCode = ReturnCode.SEEK_NEXT_USING_HINT;
+      }
       initialized = true;
-    }
-
-    // before the current range
-    if (Bytes.compareTo(buffer, offset, length, range.startRow, 0, range.startRow.length) < 0) {
-      currentReturnCode = ReturnCode.SEEK_NEXT_USING_HINT;
     } else {
       currentReturnCode = ReturnCode.INCLUDE;
     }
