@@ -94,37 +94,43 @@ public class HFileLink extends FileLink {
   private final Path tempPath;
 
   /**
+   * Dead simple hfile link constructor
+   */
+  public HFileLink(final Path originPath, final Path tempPath,
+                   final Path archivePath, final Path mobPath) {
+    this.tempPath  = tempPath;
+    this.originPath = originPath;
+    this.archivePath = archivePath;
+    this.mobPath = mobPath;
+
+    setLocations(originPath, mobPath, tempPath, archivePath);
+  }
+
+  /**
    * @param conf {@link Configuration} from which to extract specific archive locations
-   * @param path The path of the HFile Link.
+   * @param hFileLinkPattern The path ending with a HFileLink pattern. (table=region-hfile)
    * @throws IOException on unexpected error.
    */
-  public HFileLink(Configuration conf, Path path) throws IOException {
-    this(FSUtils.getRootDir(conf), HFileArchiveUtil.getArchivePath(conf), path);
+  public static final HFileLink buildFromHFileLinkPattern(Configuration conf, Path hFileLinkPattern)
+          throws IOException {
+    return buildFromHFileLinkPattern(FSUtils.getRootDir(conf),
+            HFileArchiveUtil.getArchivePath(conf), hFileLinkPattern);
   }
 
   /**
    * @param rootDir Path to the root directory where hbase files are stored
    * @param archiveDir Path to the hbase archive directory
-   * @param mobDir path to the hbase mob directory
-   * @param path The path of the HFile Link.
+   * @param hFileLinkPattern The path of the HFile Link.
    */
-    public HFileLink(final Path rootDir, final Path archiveDir, final Path mobDir, final Path path) {
-        Path hfilePath = getRelativeTablePath(path);
-        this.tempPath = new Path(new Path(rootDir, HConstants.HBASE_TEMP_DIRECTORY), hfilePath);
-        this.originPath = new Path(rootDir, hfilePath);
-        this.mobPath = new Path(mobDir, hfilePath);
-        this.archivePath = new Path(archiveDir, hfilePath);
-        setLocations(originPath, mobPath, tempPath, archivePath);
-    }
-
-
-    /**
-   * @param rootDir Path to the root directory where hbase files are stored
-   * @param archiveDir Path to the hbase archive directory
-   * @param path The path of the HFile Link.
-   */
-  public HFileLink(final Path rootDir, final Path archiveDir, final Path path) {
-    this(rootDir, archiveDir, new Path(rootDir, MobConstants.MOB_DIR_NAME), path);
+  public final static HFileLink buildFromHFileLinkPattern(final Path rootDir,
+                                                          final Path archiveDir,
+                                                          final Path hFileLinkPattern) {
+    Path hfilePath = getHFileLinkPatternRelativePath(hFileLinkPattern);
+    Path tempPath = new Path(new Path(rootDir, HConstants.HBASE_TEMP_DIRECTORY), hfilePath);
+    Path originPath = new Path(rootDir, hfilePath);
+    Path mobPath = new Path(new Path(rootDir, MobConstants.MOB_DIR_NAME), hfilePath);
+    Path archivePath = new Path(archiveDir, hfilePath);
+    return new HFileLink(originPath, tempPath, archivePath, mobPath);
   }
 
   /**
@@ -136,7 +142,7 @@ public class HFileLink extends FileLink {
    * @return the relative Path to open the specified table/region/family/hfile link
    */
   public static Path createPath(final TableName table, final String region,
-      final String family, final String hfile) {
+                                final String family, final String hfile) {
     if (HFileLink.isHFileLink(hfile)) {
       return new Path(family, hfile);
     }
@@ -153,9 +159,10 @@ public class HFileLink extends FileLink {
    * @return Link to the file with the specified table/region/family/hfile location
    * @throws IOException on unexpected error.
    */
-  public static HFileLink create(final Configuration conf, final TableName table,
-      final String region, final String family, final String hfile) throws IOException {
-    return new HFileLink(conf, createPath(table, region, family, hfile));
+  public static HFileLink build(final Configuration conf, final TableName table,
+                                 final String region, final String family, final String hfile)
+          throws IOException {
+    return HFileLink.buildFromHFileLinkPattern(conf, createPath(table, region, family, hfile));
   }
 
   /**
@@ -205,11 +212,11 @@ public class HFileLink extends FileLink {
    * @return Relative table path
    * @throws IOException on unexpected error.
    */
-  private static Path getRelativeTablePath(final Path path) {
+  private static Path getHFileLinkPatternRelativePath(final Path path) {
     // table=region-hfile
     Matcher m = REF_OR_HFILE_LINK_PATTERN.matcher(path.getName());
     if (!m.matches()) {
-      throw new IllegalArgumentException(path.getName() + " is not a valid HFileLink name!");
+      throw new IllegalArgumentException(path.getName() + " is not a valid HFileLink pattern!");
     }
 
     // Convert the HFileLink name into a real table/region/cf/hfile path.
@@ -221,6 +228,36 @@ public class HFileLink extends FileLink {
     return new Path(tableDir, new Path(regionName, new Path(familyName,
         hfileName)));
   }
+
+  /**
+   * Path that only has table/[region]/[cf]/[file]
+   * @param fqPath Fully qualified path.
+   * @return
+   */
+  public static Path getRelativeTablePath(final Path fqPath) {
+    String hfileName = fqPath.getName();
+    String familyName = fqPath.getParent().getName();
+    String regionName = fqPath.getParent().getParent().getName();
+    TableName tableName = TableName.valueOf(fqPath.getParent().getParent().getParent().getName());
+    Path tableDir = FSUtils.getTableDir(new Path("./"), tableName);
+    return new Path(tableDir, new Path(regionName, new Path(familyName,
+            hfileName)));
+  }
+
+  /**
+   * Path that only has table/[region]/[cf]/[file]
+   * @param fqPath Fully qualified path.
+   * @return
+   */
+  public static Path getRelativeTablePath(final TableName tableName, final Path fqPath) {
+    String hfileName = fqPath.getName();
+    String familyName = fqPath.getParent().getName();
+    String regionName = fqPath.getParent().getParent().getName();
+    Path tableDir = FSUtils.getTableDir(new Path("./"), tableName);
+    return new Path(tableDir, new Path(regionName, new Path(familyName,
+            hfileName)));
+  }
+
 
   /**
    * Get the HFile name of the referenced link
@@ -270,11 +307,12 @@ public class HFileLink extends FileLink {
   public boolean exists(final FileSystem fs) throws IOException {
     return fs.exists(this.originPath) ||
            fs.exists(this.tempPath) ||
-           fs.exists(this.archivePath);
+           fs.exists(this.archivePath) ||
+           fs.exists(this.mobPath);
   }
 
   /**
-   * Create a new HFileLink name
+   * Create a new HFileLink name.  Used in Test only.
    *
    * @param hfileRegionInfo - Linked HFile Region Info
    * @param hfileName - Linked HFile name
@@ -283,7 +321,7 @@ public class HFileLink extends FileLink {
   public static String createHFileLinkName(final HRegionInfo hfileRegionInfo,
       final String hfileName) {
     return createHFileLinkName(hfileRegionInfo.getTable(),
-                      hfileRegionInfo.getEncodedName(), hfileName);
+            hfileRegionInfo.getEncodedName(), hfileName);
   }
 
   /**
@@ -339,7 +377,7 @@ public class HFileLink extends FileLink {
    * @return true if the file is created, otherwise the file exists.
    * @throws IOException on file or parent directory creation failure
    */
-  public static boolean create(final Configuration conf, final FileSystem fs,
+  private static boolean create(final Configuration conf, final FileSystem fs,
       final Path dstFamilyPath, final TableName linkedTable, final String linkedRegion,
       final String hfileName) throws IOException {
     String familyName = dstFamilyPath.getName();
@@ -425,7 +463,7 @@ public class HFileLink extends FileLink {
     Path tablePath = regionPath.getParent();
 
     String linkName = createHFileLinkName(FSUtils.getTableName(tablePath),
-        regionPath.getName(), hfileName);
+            regionPath.getName(), hfileName);
     Path linkTableDir = FSUtils.getTableDir(rootDir, linkTableName);
     Path regionDir = HRegion.getRegionDir(linkTableDir, linkRegionName);
     return new Path(new Path(regionDir, familyPath.getName()), linkName);

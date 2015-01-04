@@ -35,7 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.util.IdLock;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -72,7 +72,7 @@ public class MobFileCache {
   }
 
   // a ConcurrentHashMap, accesses to this map are synchronized.
-  private Map<String, CachedMobFile> map = null;
+  private Map<StoreFileInfo, CachedMobFile> map = null;
   // caches access count
   private final AtomicLong count = new AtomicLong(0);
   private long lastAccess = 0;
@@ -102,7 +102,7 @@ public class MobFileCache {
     this.mobFileMaxCacheSize = conf.getInt(MobConstants.MOB_FILE_CACHE_SIZE_KEY,
         MobConstants.DEFAULT_MOB_FILE_CACHE_SIZE);
     isCacheEnabled = (mobFileMaxCacheSize > 0);
-    map = new ConcurrentHashMap<String, CachedMobFile>(mobFileMaxCacheSize);
+    map = new ConcurrentHashMap<StoreFileInfo, CachedMobFile>(mobFileMaxCacheSize);
     if (isCacheEnabled) {
       long period = conf.getLong(MobConstants.MOB_CACHE_EVICT_PERIOD,
           MobConstants.DEFAULT_MOB_CACHE_EVICT_PERIOD); // in seconds
@@ -142,8 +142,8 @@ public class MobFileCache {
         int start = (int) (mobFileMaxCacheSize * evictRemainRatio);
         if (start >= 0) {
           for (int i = start; i < files.size(); i++) {
-            String name = files.get(i).getFileName();
-            CachedMobFile evictedFile = map.remove(name);
+            CachedMobFile mobFile = files.get(i);
+            CachedMobFile evictedFile = map.remove(mobFile.getStoreFileInfo());
             if (evictedFile != null) {
               evictedFiles.add(evictedFile);
             }
@@ -161,23 +161,24 @@ public class MobFileCache {
     }
   }
 
+
   /**
    * Evicts the cached file by the name.
-   * @param fileName The name of a cached file.
+   * @param sfi cached StoreFileInfo entry
    */
-  public void evictFile(String fileName) {
+  public void evictFile(StoreFileInfo sfi) {
     if (isCacheEnabled) {
       IdLock.Entry lockEntry = null;
       try {
         // obtains the lock to close the cached file.
-        lockEntry = keyLock.getLockEntry(fileName.hashCode());
-        CachedMobFile evictedFile = map.remove(fileName);
+        lockEntry = keyLock.getLockEntry(sfi.hashCode());
+        CachedMobFile evictedFile = map.remove(sfi);
         if (evictedFile != null) {
           evictedFile.close();
           evictedFileCount.incrementAndGet();
         }
       } catch (IOException e) {
-        LOG.error("Fail to evict the file " + fileName, e);
+        LOG.error("Fail to evict the file " + sfi, e);
       } finally {
         if (lockEntry != null) {
           keyLock.releaseLockEntry(lockEntry);
@@ -189,28 +190,27 @@ public class MobFileCache {
   /**
    * Opens a mob file.
    * @param fs The current file system.
-   * @param path The file path.
+   * @param sfi StoreFileInfo. can contain HFileLinks or references..
    * @param cacheConf The current MobCacheConfig
    * @return A opened mob file.
    * @throws IOException
    */
-  public MobFile openFile(FileSystem fs, Path path, MobCacheConfig cacheConf) throws IOException {
+  public MobFile openFile(FileSystem fs, StoreFileInfo sfi, MobCacheConfig cacheConf) throws IOException {
     if (!isCacheEnabled) {
-      return MobFile.create(fs, path, conf, cacheConf);
+      return MobFile.create(fs, sfi, conf, cacheConf);
     } else {
-      String fileName = path.getName();
-      CachedMobFile cached = map.get(fileName);
-      IdLock.Entry lockEntry = keyLock.getLockEntry(fileName.hashCode());
+      CachedMobFile cached = map.get(sfi);
+      IdLock.Entry lockEntry = keyLock.getLockEntry(sfi.hashCode());
       try {
         if (cached == null) {
-          cached = map.get(fileName);
+          cached = map.get(sfi);
           if (cached == null) {
             if (map.size() > mobFileMaxCacheSize) {
               evict();
             }
-            cached = CachedMobFile.create(fs, path, conf, cacheConf);
+            cached = CachedMobFile.create(fs, sfi, conf, cacheConf);
             cached.open();
-            map.put(fileName, cached);
+            map.put(sfi, cached);
             miss.incrementAndGet();
           }
         }
@@ -233,7 +233,7 @@ public class MobFileCache {
       if (!isCacheEnabled) {
         file.close();
       } else {
-        lockEntry = keyLock.getLockEntry(file.getFileName().hashCode());
+        lockEntry = keyLock.getLockEntry(file.getStoreFileInfo().hashCode());
         file.close();
       }
     } catch (IOException e) {

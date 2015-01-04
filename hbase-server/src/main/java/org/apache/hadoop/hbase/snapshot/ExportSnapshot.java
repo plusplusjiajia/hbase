@@ -24,7 +24,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -53,20 +52,16 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.io.FileLink;
 import org.apache.hadoop.hbase.io.HFileLink;
 import org.apache.hadoop.hbase.io.HLogLink;
-import org.apache.hadoop.hbase.io.hfile.HFile;
-import org.apache.hadoop.hbase.mapreduce.JobUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mob.MobUtils;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotFileInfo;
 import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotRegionManifest;
-import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.HFileArchiveUtil;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -75,7 +70,6 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.mapreduce.security.TokenCache;
 import org.apache.hadoop.hbase.io.hadoopbackport.ThrottledInputStream;
@@ -390,14 +384,14 @@ public class ExportSnapshot extends Configured implements Tool {
      * if the file is not found.
      */
     private FSDataInputStream openSourceFile(Context context, final SnapshotFileInfo fileInfo)
-        throws IOException {
+            throws IOException {
       try {
         Configuration conf = context.getConfiguration();
         FileLink link = null;
         switch (fileInfo.getType()) {
           case HFILE:
             Path inputPath = new Path(fileInfo.getHfile());
-            link = getFileLink(inputPath, conf);
+            link = HFileLink.buildFromHFileLinkPattern(conf, inputPath);
             break;
           case WAL:
             String serverName = fileInfo.getWalServer();
@@ -423,7 +417,7 @@ public class ExportSnapshot extends Configured implements Tool {
         switch (fileInfo.getType()) {
           case HFILE:
             Path inputPath = new Path(fileInfo.getHfile());
-            link = getFileLink(inputPath, conf);
+            link = HFileLink.buildFromHFileLinkPattern(conf, inputPath);
             break;
           case WAL:
             link = new HLogLink(inputRoot, fileInfo.getWalServer(), fileInfo.getWalName());
@@ -440,16 +434,6 @@ public class ExportSnapshot extends Configured implements Tool {
         LOG.error("Unable to get the status for source file=" + fileInfo.toString(), e);
         throw e;
       }
-    }
-
-    private FileLink getFileLink(Path path, Configuration conf) throws IOException{
-      String regionName = HFileLink.getReferencedRegionName(path.getName());
-      TableName tableName = HFileLink.getReferencedTableName(path.getName());
-      if(MobUtils.getMobRegionInfo(tableName).getEncodedName().equals(regionName)) {
-        return new HFileLink(MobUtils.getQualifiedMobRootDir(conf),
-                HFileArchiveUtil.getArchivePath(conf), path);
-      }
-      return new HFileLink(inputRoot, inputArchive, path);
     }
 
     private FileChecksum getFileChecksum(final FileSystem fs, final Path path) {
@@ -521,7 +505,7 @@ public class ExportSnapshot extends Configured implements Tool {
             if (storeFile.hasFileSize()) {
               size = storeFile.getFileSize();
             } else {
-              size = new HFileLink(conf, path).getFileStatus(fs).getLen();
+              size = HFileLink.buildFromHFileLinkPattern(conf, path).getFileStatus(fs).getLen();
             }
             files.add(new Pair<SnapshotFileInfo, Long>(fileInfo, size));
           }

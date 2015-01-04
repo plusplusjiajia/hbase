@@ -28,6 +28,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 
 /**
  * Cached mob file.
@@ -45,6 +46,12 @@ public class CachedMobFile extends MobFile implements Comparable<CachedMobFile> 
   public static CachedMobFile create(FileSystem fs, Path path, Configuration conf,
       CacheConfig cacheConf) throws IOException {
     StoreFile sf = new StoreFile(fs, path, conf, cacheConf, BloomType.NONE);
+    return new CachedMobFile(sf);
+  }
+
+  public static CachedMobFile create(FileSystem fs, StoreFileInfo sfi, Configuration conf,
+                               CacheConfig cacheConf) throws IOException {
+    StoreFile sf = new StoreFile(fs, sfi, conf, cacheConf, BloomType.NONE);
     return new CachedMobFile(sf);
   }
 

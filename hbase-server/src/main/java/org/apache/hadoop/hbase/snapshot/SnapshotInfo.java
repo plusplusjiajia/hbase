@@ -227,8 +227,8 @@ public final class SnapshotInfo extends Configured implements Tool {
      */
     FileInfo addStoreFile(final HRegionInfo region, final String family,
         final SnapshotRegionManifest.StoreFile storeFile) throws IOException {
-      HFileLink link = HFileLink.create(conf, snapshotTable, region.getEncodedName(),
-                                        family, storeFile.getName());
+      HFileLink link = HFileLink.build(conf, snapshotTable, region.getEncodedName(),
+              family, storeFile.getName());
       boolean isCorrupted = false;
       boolean inArchive = false;
       long size = -1;

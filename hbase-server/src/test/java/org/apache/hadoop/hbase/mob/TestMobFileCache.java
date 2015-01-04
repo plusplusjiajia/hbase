@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.regionserver.HMobStore;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -53,12 +54,6 @@ public class TestMobFileCache extends TestCase {
   private MobFileCache mobFileCache;
   private Date currentDate = new Date();
   private final String TEST_CACHE_SIZE = "2";
-  private final int EXPECTED_CACHE_SIZE_ZERO = 0;
-  private final int EXPECTED_CACHE_SIZE_ONE = 1;
-  private final int EXPECTED_CACHE_SIZE_TWO = 2;
-  private final int EXPECTED_CACHE_SIZE_THREE = 3;
-  private final long EXPECTED_REFERENCE_ONE = 1;
-  private final long EXPECTED_REFERENCE_TWO = 2;
 
   private final String TABLE = "tableName";
   private final String FAMILY1 = "family1";
@@ -160,47 +155,51 @@ public class TestMobFileCache extends TestCase {
     Path file2Path = createMobStoreFile(FAMILY2);
     Path file3Path = createMobStoreFile(FAMILY3);
 
+    StoreFileInfo sfi1 = new StoreFileInfo(conf, fs, file1Path);
+    StoreFileInfo sfi2 = new StoreFileInfo(conf, fs, file2Path);
+    StoreFileInfo sfi3 = new StoreFileInfo(conf, fs, file3Path);
+
     // Before open one file by the MobFileCache
-    assertEquals(EXPECTED_CACHE_SIZE_ZERO, mobFileCache.getCacheSize());
+    assertEquals(0, mobFileCache.getCacheSize());
     // Open one file by the MobFileCache
     CachedMobFile cachedMobFile1 = (CachedMobFile) mobFileCache.openFile(
-        fs, file1Path, mobCacheConf);
-    assertEquals(EXPECTED_CACHE_SIZE_ONE, mobFileCache.getCacheSize());
+        fs, sfi1, mobCacheConf);
+    assertEquals(1, mobFileCache.getCacheSize());
     assertNotNull(cachedMobFile1);
-    assertEquals(EXPECTED_REFERENCE_TWO, cachedMobFile1.getReferenceCount());
+    assertEquals((long) 2, cachedMobFile1.getReferenceCount());
 
     // The evict is also managed by a schedule thread pool.
     // And its check period is set as 3600 seconds by default.
     // This evict should get the lock at the most time
     mobFileCache.evict();  // Cache not full, evict it
-    assertEquals(EXPECTED_CACHE_SIZE_ONE, mobFileCache.getCacheSize());
-    assertEquals(EXPECTED_REFERENCE_TWO, cachedMobFile1.getReferenceCount());
+    assertEquals(1, mobFileCache.getCacheSize());
+    assertEquals((long) 2, cachedMobFile1.getReferenceCount());
 
-    mobFileCache.evictFile(file1Path.getName());  // Evict one file
-    assertEquals(EXPECTED_CACHE_SIZE_ZERO, mobFileCache.getCacheSize());
-    assertEquals(EXPECTED_REFERENCE_ONE, cachedMobFile1.getReferenceCount());
+    mobFileCache.evictFile(sfi1);  // Evict one file
+    assertEquals(0, mobFileCache.getCacheSize());
+    assertEquals((long) 1, cachedMobFile1.getReferenceCount());
 
     cachedMobFile1.close();  // Close the cached mob file
 
     // Reopen three cached file
     cachedMobFile1 = (CachedMobFile) mobFileCache.openFile(
-        fs, file1Path, mobCacheConf);
-    assertEquals(EXPECTED_CACHE_SIZE_ONE, mobFileCache.getCacheSize());
+        fs, sfi1, mobCacheConf);
+    assertEquals(1, mobFileCache.getCacheSize());
     CachedMobFile cachedMobFile2 = (CachedMobFile) mobFileCache.openFile(
-        fs, file2Path, mobCacheConf);
-    assertEquals(EXPECTED_CACHE_SIZE_TWO, mobFileCache.getCacheSize());
+        fs, sfi2, mobCacheConf);
+    assertEquals(2, mobFileCache.getCacheSize());
     CachedMobFile cachedMobFile3 = (CachedMobFile) mobFileCache.openFile(
-        fs, file3Path, mobCacheConf);
+        fs, sfi3, mobCacheConf);
     // Before the evict
-    // Evict the cache, should clost the first file 1
-    assertEquals(EXPECTED_CACHE_SIZE_THREE, mobFileCache.getCacheSize());
-    assertEquals(EXPECTED_REFERENCE_TWO, cachedMobFile1.getReferenceCount());
-    assertEquals(EXPECTED_REFERENCE_TWO, cachedMobFile2.getReferenceCount());
-    assertEquals(EXPECTED_REFERENCE_TWO, cachedMobFile3.getReferenceCount());
+    // Evict the cache, should close the first file 1
+    assertEquals(3, mobFileCache.getCacheSize());
+    assertEquals((long) 2, cachedMobFile1.getReferenceCount());
+    assertEquals((long) 2, cachedMobFile2.getReferenceCount());
+    assertEquals((long) 2, cachedMobFile3.getReferenceCount());
     mobFileCache.evict();
-    assertEquals(EXPECTED_CACHE_SIZE_ONE, mobFileCache.getCacheSize());
-    assertEquals(EXPECTED_REFERENCE_ONE, cachedMobFile1.getReferenceCount());
-    assertEquals(EXPECTED_REFERENCE_ONE, cachedMobFile2.getReferenceCount());
-    assertEquals(EXPECTED_REFERENCE_TWO, cachedMobFile3.getReferenceCount());
+    assertEquals(1, mobFileCache.getCacheSize());
+    assertEquals((long) 1, cachedMobFile1.getReferenceCount());
+    assertEquals((long) 1, cachedMobFile2.getReferenceCount());
+    assertEquals((long) 2, cachedMobFile3.getReferenceCount());
   }
 }

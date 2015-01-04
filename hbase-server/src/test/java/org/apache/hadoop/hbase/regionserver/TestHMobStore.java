@@ -173,10 +173,8 @@ public class TestHMobStore {
     int valueLength2 = key2.getValueLength();
     int valueLength3 = key3.getValueLength();
 
-    String targetPathName = MobUtils.formatDate(currentDate);
     byte[] referenceValue =
-            Bytes.toBytes(targetPathName + Path.SEPARATOR
-                + mobFilePath.getName());
+            Bytes.toBytes(mobFilePath.getName());
     byte[] newReferenceValue1 = Bytes.add(Bytes.toBytes(valueLength1), referenceValue);
     byte[] newReferenceValue2 = Bytes.add(Bytes.toBytes(valueLength2), referenceValue);
     byte[] newReferenceValue3 = Bytes.add(Bytes.toBytes(valueLength3), referenceValue);
@@ -428,8 +426,7 @@ public class TestHMobStore {
   public void testResolve() throws Exception {
     final Configuration conf = HBaseConfiguration.create();
     init(name.getMethodName(), conf, true);
-    String targetPathName = MobUtils.formatDate(currentDate);
-    Path targetPath = new Path(store.getPath(), targetPathName);
+    Path targetPath = store.getPath();
     store.commitFile(mobFilePath, targetPath);
     //resolve
     Cell resultCell1 = store.resolve(seekKey1, false);
