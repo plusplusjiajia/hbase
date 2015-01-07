@@ -88,9 +88,13 @@ public class MultiRowRangeFilter extends FilterBase {
         currentReturnCode = ReturnCode.NEXT_ROW;
         return false;
       }
-      range = rangeList.get(index);
+      if(index != -1) {
+        range = rangeList.get(index);
+      } else {
+        range = rangeList.get(0);
+      }
       if (!initialized) {
-        if (range.contains(buffer, offset, length)) {
+        if(index != -1) {
           currentReturnCode = ReturnCode.INCLUDE;
         } else {
           currentReturnCode = ReturnCode.SEEK_NEXT_USING_HINT;
@@ -112,6 +116,7 @@ public class MultiRowRangeFilter extends FilterBase {
 
   @Override
   public Cell getNextCellHint(Cell currentKV) {
+    // skip to the next range's start row
     return KeyValueUtil.createFirstOnRow(range.startRow);
   }
 
@@ -204,12 +209,16 @@ public class MultiRowRangeFilter extends FilterBase {
     if (index < 0) {
       int insertionPosition = -index - 1;
       // check if the row key in the range before the insertion position
-      if (insertionPosition != 0 && rangeList.get(insertionPosition - 1).contains(rowKey))
+      if (insertionPosition != 0 && rangeList.get(insertionPosition - 1).contains(rowKey)) {
         return insertionPosition - 1;
-
+      }
+      // check if the row key is before the first range
+      if (insertionPosition == 0 && !rangeList.get(insertionPosition).contains(rowKey)) {
+        return -1;
+      }
       return insertionPosition;
     }
-    // equals one of the start keys
+    // the row key equals one of the start keys
     return index;
   }
 
