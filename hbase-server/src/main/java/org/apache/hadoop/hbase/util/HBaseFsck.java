@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.util;
 
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -43,8 +44,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -129,6 +134,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.zookeeper.KeeperException;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -183,7 +189,7 @@ import com.google.protobuf.ServiceException;
  */
 @InterfaceAudience.LimitedPrivate(HBaseInterfaceAudience.TOOLS)
 @InterfaceStability.Evolving
-public class HBaseFsck extends Configured {
+public class HBaseFsck extends Configured implements Closeable {
   public static final long DEFAULT_TIME_LAG = 60000; // default value of 1 minute
   public static final long DEFAULT_SLEEP_BEFORE_RERUN = 10000;
   private static final int MAX_NUM_THREADS = 50; // #threads to contact regions
@@ -321,6 +327,30 @@ public class HBaseFsck extends Configured {
     errors = getErrorReporter(getConf());
     this.executor = exec;
   }
+  
+  private class FileLockCallable implements Callable<FSDataOutputStream> {
+    @Override
+    public FSDataOutputStream call() throws IOException {
+      try {
+        FileSystem fs = FSUtils.getCurrentFileSystem(getConf());
+        FsPermission defaultPerms = FSUtils.getFilePermissions(fs, getConf(),
+            HConstants.DATA_FILE_UMASK_KEY);
+        Path tmpDir = new Path(FSUtils.getRootDir(getConf()), HConstants.HBASE_TEMP_DIRECTORY);
+        fs.mkdirs(tmpDir);
+        HBCK_LOCK_PATH = new Path(tmpDir, HBCK_LOCK_FILE);
+        final FSDataOutputStream out = FSUtils.create(fs, HBCK_LOCK_PATH, defaultPerms, false);
+        out.writeBytes(InetAddress.getLocalHost().toString());
+        out.flush();
+        return out;
+      } catch(RemoteException e) {
+        if(AlreadyBeingCreatedException.class.getName().equals(e.getClassName())){
+          return null;
+        } else {
+          throw e;
+        }
+      }
+    }
+  }
 
   /**
    * This method maintains a lock using a file. If the creation fails we return null
@@ -329,24 +359,27 @@ public class HBaseFsck extends Configured {
    * @throws IOException
    */
   private FSDataOutputStream checkAndMarkRunningHbck() throws IOException {
+    FileLockCallable callable = new FileLockCallable();
+    ExecutorService executor = Executors.newFixedThreadPool(1);
+    FutureTask<FSDataOutputStream> futureTask = new FutureTask<FSDataOutputStream>(callable);
+    executor.execute(futureTask);
+    final int timeoutInSeconds = 30;
+    FSDataOutputStream stream = null;
     try {
-      FileSystem fs = FSUtils.getCurrentFileSystem(getConf());
-      FsPermission defaultPerms = FSUtils.getFilePermissions(fs, getConf(),
-          HConstants.DATA_FILE_UMASK_KEY);
-      Path tmpDir = new Path(FSUtils.getRootDir(getConf()), HConstants.HBASE_TEMP_DIRECTORY);
-      fs.mkdirs(tmpDir);
-      HBCK_LOCK_PATH = new Path(tmpDir, HBCK_LOCK_FILE);
-      final FSDataOutputStream out = FSUtils.create(fs, HBCK_LOCK_PATH, defaultPerms, false);
-      out.writeBytes(InetAddress.getLocalHost().toString());
-      out.flush();
-      return out;
-    } catch(RemoteException e) {
-      if(AlreadyBeingCreatedException.class.getName().equals(e.getClassName())){
-        return null;
-      } else {
-        throw e;
-      }
+      stream = futureTask.get(timeoutInSeconds, TimeUnit.SECONDS);
+    } catch (ExecutionException ee) {
+      LOG.warn("Encountered exception when opening lock file", ee);
+    } catch (InterruptedException ie) {
+      LOG.warn("Interrupted when opening lock file", ie);
+      Thread.currentThread().interrupt();
+    } catch (TimeoutException exception) {
+      // took too long to obtain lock
+      LOG.warn("Took more than " + timeoutInSeconds + " seconds in obtaining lock");
+      futureTask.cancel(true);
+    } finally {
+      executor.shutdownNow();
     }
+    return stream;
   }
 
   private void unlockHbck() {
@@ -386,7 +419,8 @@ public class HBaseFsck extends Configured {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-          unlockHbck();
+        IOUtils.closeStream(HBaseFsck.this);
+        unlockHbck();
       }
     });
     LOG.debug("Launching hbck");
@@ -600,6 +634,11 @@ public class HBaseFsck extends Configured {
     byte[] result = new byte[rowlength];
     System.arraycopy(b, Bytes.SIZEOF_SHORT, result, 0, rowlength);
     return result;
+  }
+
+  @Override
+  public void close() throws IOException {
+    IOUtils.cleanup(null, admin, meta, connection);
   }
 
   private static class RegionBoundariesInformation {
@@ -1700,7 +1739,6 @@ public class HBaseFsck extends Configured {
   private void deleteMetaRegion(byte[] metaKey) throws IOException {
     Delete d = new Delete(metaKey);
     meta.delete(d);
-    meta.flushCommits();
     LOG.info("Deleted " + Bytes.toString(metaKey) + " from META" );
   }
 
@@ -1721,7 +1759,6 @@ public class HBaseFsck extends Configured {
     mutations.add(p);
 
     meta.mutateRow(mutations);
-    meta.flushCommits();
     LOG.info("Reset split parent " + hi.metaEntry.getRegionNameAsString() + " in META" );
   }
 
@@ -4073,6 +4110,7 @@ public class HBaseFsck extends Configured {
     public int run(String[] args) throws Exception {
       HBaseFsck hbck = new HBaseFsck(getConf());
       hbck.exec(hbck.executor, args);
+      hbck.close();
       return hbck.getRetCode();
     }
   };
@@ -4291,7 +4329,7 @@ public class HBaseFsck extends Configured {
         setRetCode(code);
       }
     } finally {
-      IOUtils.cleanup(null, connection, meta, admin);
+      IOUtils.cleanup(null, this);
     }
     return this;
   }

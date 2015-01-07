@@ -26,24 +26,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
@@ -107,6 +89,22 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Run tests that use the HBase clients; {@link HTable}.
@@ -5204,40 +5202,41 @@ public class TestFromClientSide {
     TableName TABLE = TableName.valueOf("testNonCachedGetRegionLocation");
     byte [] family1 = Bytes.toBytes("f1");
     byte [] family2 = Bytes.toBytes("f2");
-    HTable table = TEST_UTIL.createTable(TABLE, new byte[][] {family1, family2}, 10);
-    Admin admin = new HBaseAdmin(TEST_UTIL.getConfiguration());
-    Map <HRegionInfo, ServerName> regionsMap = table.getRegionLocations();
-    assertEquals(1, regionsMap.size());
-    HRegionInfo regionInfo = regionsMap.keySet().iterator().next();
-    ServerName addrBefore = regionsMap.get(regionInfo);
-    // Verify region location before move.
-    HRegionLocation addrCache = table.getRegionLocation(regionInfo.getStartKey(), false);
-    HRegionLocation addrNoCache = table.getRegionLocation(regionInfo.getStartKey(),  true);
-
-    assertEquals(addrBefore.getPort(), addrCache.getPort());
-    assertEquals(addrBefore.getPort(), addrNoCache.getPort());
-
-    ServerName addrAfter = null;
-    // Now move the region to a different server.
-    for (int i = 0; i < SLAVES; i++) {
-      HRegionServer regionServer = TEST_UTIL.getHBaseCluster().getRegionServer(i);
-      ServerName addr = regionServer.getServerName();
-      if (addr.getPort() != addrBefore.getPort()) {
-        admin.move(regionInfo.getEncodedNameAsBytes(),
-            Bytes.toBytes(addr.toString()));
-        // Wait for the region to move.
-        Thread.sleep(5000);
-        addrAfter = addr;
-        break;
+    try (HTable table = TEST_UTIL.createTable(TABLE, new byte[][] {family1, family2}, 10);
+        Admin admin = new HBaseAdmin(TEST_UTIL.getConfiguration())) {
+      Map <HRegionInfo, ServerName> regionsMap = table.getRegionLocations();
+      assertEquals(1, regionsMap.size());
+      HRegionInfo regionInfo = regionsMap.keySet().iterator().next();
+      ServerName addrBefore = regionsMap.get(regionInfo);
+      // Verify region location before move.
+      HRegionLocation addrCache = table.getRegionLocation(regionInfo.getStartKey(), false);
+      HRegionLocation addrNoCache = table.getRegionLocation(regionInfo.getStartKey(),  true);
+  
+      assertEquals(addrBefore.getPort(), addrCache.getPort());
+      assertEquals(addrBefore.getPort(), addrNoCache.getPort());
+  
+      ServerName addrAfter = null;
+      // Now move the region to a different server.
+      for (int i = 0; i < SLAVES; i++) {
+        HRegionServer regionServer = TEST_UTIL.getHBaseCluster().getRegionServer(i);
+        ServerName addr = regionServer.getServerName();
+        if (addr.getPort() != addrBefore.getPort()) {
+          admin.move(regionInfo.getEncodedNameAsBytes(),
+              Bytes.toBytes(addr.toString()));
+          // Wait for the region to move.
+          Thread.sleep(5000);
+          addrAfter = addr;
+          break;
+        }
       }
+  
+      // Verify the region was moved.
+      addrCache = table.getRegionLocation(regionInfo.getStartKey(), false);
+      addrNoCache = table.getRegionLocation(regionInfo.getStartKey(), true);
+      assertNotNull(addrAfter);
+      assertTrue(addrAfter.getPort() != addrCache.getPort());
+      assertEquals(addrAfter.getPort(), addrNoCache.getPort());
     }
-
-    // Verify the region was moved.
-    addrCache = table.getRegionLocation(regionInfo.getStartKey(), false);
-    addrNoCache = table.getRegionLocation(regionInfo.getStartKey(), true);
-    assertNotNull(addrAfter);
-    assertTrue(addrAfter.getPort() != addrCache.getPort());
-    assertEquals(addrAfter.getPort(), addrNoCache.getPort());
   }
 
   @Test
@@ -5507,22 +5506,17 @@ public class TestFromClientSide {
     Put p = new Put(row);
     p.add(FAMILY, QUALIFIER, 10, VALUE);
     table.put(p);
-    table.flushCommits();
-
     p = new Put(row);
     p.add(FAMILY, QUALIFIER, 11, ArrayUtils.add(VALUE, (byte) 2));
     table.put(p);
-    table.flushCommits();
 
     p = new Put(row);
     p.add(FAMILY, QUALIFIER, 12, ArrayUtils.add(VALUE, (byte) 3));
     table.put(p);
-    table.flushCommits();
 
     p = new Put(row);
     p.add(FAMILY, QUALIFIER, 13, ArrayUtils.add(VALUE, (byte) 4));
     table.put(p);
-    table.flushCommits();
 
     int versions = 4;
     Scan s = new Scan(row);
@@ -5643,7 +5637,6 @@ public class TestFromClientSide {
     put = new Put(Bytes.toBytes("0-b22222-0000000000000000009"));
     put.add(FAMILY, QUALIFIER, VALUE);
     ht.put(put);
-    ht.flushCommits();
     Scan scan = new Scan(Bytes.toBytes("0-b11111-9223372036854775807"),
         Bytes.toBytes("0-b11111-0000000000000000000"));
     scan.setReversed(true);
@@ -6248,10 +6241,13 @@ public class TestFromClientSide {
     HColumnDescriptor fam = new HColumnDescriptor(FAMILY);
     htd.addFamily(fam);
     byte[][] KEYS = HBaseTestingUtility.KEYS_FOR_HBA_CREATE_TABLE;
-    TEST_UTIL.getHBaseAdmin().createTable(htd, KEYS);
-    List<HRegionInfo> regions = TEST_UTIL.getHBaseAdmin().getTableRegions(htd.getTableName());
+    HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
+    admin.createTable(htd, KEYS);
+    List<HRegionInfo> regions = admin.getTableRegions(htd.getTableName());
 
-    for (int regionReplication = 1; regionReplication < 4 ; regionReplication++) {
+    HRegionLocator locator =
+        (HRegionLocator) admin.getConnection().getRegionLocator(htd.getTableName());
+    for (int regionReplication = 1; regionReplication < 4; regionReplication++) {
       List<RegionLocations> regionLocations = new ArrayList<RegionLocations>();
 
       // mock region locations coming from meta with multiple replicas
@@ -6263,10 +6259,7 @@ public class TestFromClientSide {
         regionLocations.add(new RegionLocations(arr));
       }
 
-      HTable table = spy(new HTable(TEST_UTIL.getConfiguration(), htd.getTableName()));
-      when(table.listRegionLocations()).thenReturn(regionLocations);
-
-      Pair<byte[][], byte[][]> startEndKeys = table.getStartEndKeys();
+      Pair<byte[][], byte[][]> startEndKeys = locator.getStartEndKeys(regionLocations);
 
       assertEquals(KEYS.length + 1, startEndKeys.getFirst().length);
 
@@ -6276,9 +6269,6 @@ public class TestFromClientSide {
         assertArrayEquals(startKey, startEndKeys.getFirst()[i]);
         assertArrayEquals(endKey, startEndKeys.getSecond()[i]);
       }
-
-      table.close();
     }
   }
-
 }

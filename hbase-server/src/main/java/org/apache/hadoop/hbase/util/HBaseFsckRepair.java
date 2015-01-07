@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MetaTableAccessor;
+import org.apache.hadoop.hbase.NotServingRegionException;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
@@ -167,7 +168,9 @@ public class HBaseFsckRepair {
           ProtobufUtil.getRegionInfo(rs, region.getRegionName());
         if (rsRegion == null) return;
       } catch (IOException ioe) {
-        return;
+        if (ioe instanceof NotServingRegionException) // no need to retry again
+          return;
+        LOG.warn("Exception when retrieving regioninfo from: " + region.getRegionNameAsString(), ioe);
       }
       Thread.sleep(1000);
     }
@@ -210,7 +213,7 @@ public class HBaseFsckRepair {
     HRegion region = HRegion.createHRegion(hri, root, conf, htd, null);
 
     // Close the new region to flush to disk. Close log file too.
-    region.close();
+    HRegion.closeHRegion(region);
     return region;
   }
 }

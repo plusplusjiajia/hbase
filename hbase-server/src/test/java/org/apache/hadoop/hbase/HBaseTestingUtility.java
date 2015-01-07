@@ -1878,7 +1878,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    * @return Count of rows loaded.
    * @throws IOException
    */
-  public int loadTable(final HTable t, final byte[] f) throws IOException {
+  public int loadTable(final Table t, final byte[] f) throws IOException {
     return loadTable(t, new byte[][] {f});
   }
 
@@ -1889,7 +1889,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    * @return Count of rows loaded.
    * @throws IOException
    */
-  public int loadTable(final HTable t, final byte[] f, boolean writeToWAL) throws IOException {
+  public int loadTable(final Table t, final byte[] f, boolean writeToWAL) throws IOException {
     return loadTable(t, new byte[][] {f}, null, writeToWAL);
   }
 
@@ -1900,7 +1900,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    * @return Count of rows loaded.
    * @throws IOException
    */
-  public int loadTable(final HTable t, final byte[][] f) throws IOException {
+  public int loadTable(final Table t, final byte[][] f) throws IOException {
     return loadTable(t, f, null);
   }
 
@@ -1912,7 +1912,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    * @return Count of rows loaded.
    * @throws IOException
    */
-  public int loadTable(final HTable t, final byte[][] f, byte[] value) throws IOException {
+  public int loadTable(final Table t, final byte[][] f, byte[] value) throws IOException {
     return loadTable(t, f, value, true);
   }
 
@@ -1924,20 +1924,18 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    * @return Count of rows loaded.
    * @throws IOException
    */
-  public int loadTable(final HTable t, final byte[][] f, byte[] value, boolean writeToWAL) throws IOException {
-    t.setAutoFlushTo(false);
-    int rowCount = 0;
+  public int loadTable(final Table t, final byte[][] f, byte[] value, boolean writeToWAL) throws IOException {
+    List<Put> puts = new ArrayList<>();
     for (byte[] row : HBaseTestingUtility.ROWS) {
       Put put = new Put(row);
       put.setDurability(writeToWAL ? Durability.USE_DEFAULT : Durability.SKIP_WAL);
       for (int i = 0; i < f.length; i++) {
         put.add(f[i], null, value != null ? value : row);
       }
-      t.put(put);
-      rowCount++;
+      puts.add(put);
     }
-    t.flushCommits();
-    return rowCount;
+    t.put(puts);
+    return puts.size();
   }
 
   /** A tracker for tracking and validating table rows
@@ -2209,56 +2207,55 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
       final byte[] columnFamily, byte [][] startKeys)
   throws IOException {
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
-    Table meta = new HTable(c, TableName.META_TABLE_NAME);
-    HTableDescriptor htd = table.getTableDescriptor();
-    if(!htd.hasFamily(columnFamily)) {
-      HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
-      htd.addFamily(hcd);
-    }
-    // remove empty region - this is tricky as the mini cluster during the test
-    // setup already has the "<tablename>,,123456789" row with an empty start
-    // and end key. Adding the custom regions below adds those blindly,
-    // including the new start region from empty to "bbb". lg
-    List<byte[]> rows = getMetaTableRows(htd.getTableName());
-    String regionToDeleteInFS = table
-        .getRegionsInRange(Bytes.toBytes(""), Bytes.toBytes("")).get(0)
-        .getRegionInfo().getEncodedName();
-    List<HRegionInfo> newRegions = new ArrayList<HRegionInfo>(startKeys.length);
-    // add custom ones
-    int count = 0;
-    for (int i = 0; i < startKeys.length; i++) {
-      int j = (i + 1) % startKeys.length;
-      HRegionInfo hri = new HRegionInfo(table.getName(),
-        startKeys[i], startKeys[j]);
-      MetaTableAccessor.addRegionToMeta(meta, hri);
-      newRegions.add(hri);
-      count++;
-    }
-    // see comment above, remove "old" (or previous) single region
-    for (byte[] row : rows) {
-      LOG.info("createMultiRegions: deleting meta row -> " +
-        Bytes.toStringBinary(row));
-      meta.delete(new Delete(row));
-    }
-    // remove the "old" region from FS
-    Path tableDir = new Path(getDefaultRootDirPath().toString()
-        + System.getProperty("file.separator") + htd.getTableName()
-        + System.getProperty("file.separator") + regionToDeleteInFS);
-    FileSystem.get(c).delete(tableDir, true);
-    // flush cache of regions
-    HConnection conn = table.getConnection();
-    conn.clearRegionCache();
-    // assign all the new regions IF table is enabled.
-    Admin admin = getHBaseAdmin();
-    if (admin.isTableEnabled(table.getName())) {
-      for(HRegionInfo hri : newRegions) {
-        admin.assign(hri.getRegionName());
+    try (Table meta = new HTable(c, TableName.META_TABLE_NAME)) {
+      HTableDescriptor htd = table.getTableDescriptor();
+      if(!htd.hasFamily(columnFamily)) {
+        HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
+        htd.addFamily(hcd);
       }
+      // remove empty region - this is tricky as the mini cluster during the test
+      // setup already has the "<tablename>,,123456789" row with an empty start
+      // and end key. Adding the custom regions below adds those blindly,
+      // including the new start region from empty to "bbb". lg
+      List<byte[]> rows = getMetaTableRows(htd.getTableName());
+      String regionToDeleteInFS = table
+          .getRegionsInRange(Bytes.toBytes(""), Bytes.toBytes("")).get(0)
+          .getRegionInfo().getEncodedName();
+      List<HRegionInfo> newRegions = new ArrayList<HRegionInfo>(startKeys.length);
+      // add custom ones
+      int count = 0;
+      for (int i = 0; i < startKeys.length; i++) {
+        int j = (i + 1) % startKeys.length;
+        HRegionInfo hri = new HRegionInfo(table.getName(),
+          startKeys[i], startKeys[j]);
+        MetaTableAccessor.addRegionToMeta(meta, hri);
+        newRegions.add(hri);
+        count++;
+      }
+      // see comment above, remove "old" (or previous) single region
+      for (byte[] row : rows) {
+        LOG.info("createMultiRegions: deleting meta row -> " +
+          Bytes.toStringBinary(row));
+        meta.delete(new Delete(row));
+      }
+      // remove the "old" region from FS
+      Path tableDir = new Path(getDefaultRootDirPath().toString()
+          + System.getProperty("file.separator") + htd.getTableName()
+          + System.getProperty("file.separator") + regionToDeleteInFS);
+      FileSystem.get(c).delete(tableDir, true);
+      // flush cache of regions
+      HConnection conn = table.getConnection();
+      conn.clearRegionCache();
+      // assign all the new regions IF table is enabled.
+      Admin admin = conn.getAdmin();
+      if (admin.isTableEnabled(table.getName())) {
+        for(HRegionInfo hri : newRegions) {
+          admin.assign(hri.getRegionName());
+        }
+      }
+
+      return count;
     }
-
-    meta.close();
-
-    return count;
   }
 
   /**
@@ -3171,17 +3168,21 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
     } finally {
       meta.close();
     }
-    // So, all regions are in the meta table but make sure master knows of the assignments before
-    // returing -- sometimes this can lag.
-    HMaster master = getHBaseCluster().getMaster();
-    final RegionStates states = master.getAssignmentManager().getRegionStates();
-    waitFor(timeout, 200, new Predicate<IOException>() {
-      @Override
-      public boolean evaluate() throws IOException {
-        List<HRegionInfo> hris = states.getRegionsOfTable(tableName);
-        return hris != null && !hris.isEmpty();
-      }
-    });
+
+    // check from the master state if we are using a mini cluster
+    if (!getHBaseClusterInterface().isDistributedCluster()) {
+      // So, all regions are in the meta table but make sure master knows of the assignments before
+      // returing -- sometimes this can lag.
+      HMaster master = getHBaseCluster().getMaster();
+      final RegionStates states = master.getAssignmentManager().getRegionStates();
+      waitFor(timeout, 200, new Predicate<IOException>() {
+        @Override
+        public boolean evaluate() throws IOException {
+          List<HRegionInfo> hris = states.getRegionsOfTable(tableName);
+          return hris != null && !hris.isEmpty();
+        }
+      });
+    }
   }
 
   /**
@@ -3548,10 +3549,10 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
   }
 
   public static int getMetaRSPort(Configuration conf) throws IOException {
-    RegionLocator table = new HTable(conf, TableName.META_TABLE_NAME);
-    HRegionLocation hloc = table.getRegionLocation(Bytes.toBytes(""));
-    table.close();
-    return hloc.getPort();
+    try (Connection c = ConnectionFactory.createConnection();
+        RegionLocator locator = c.getRegionLocator(TableName.META_TABLE_NAME)) {
+      return locator.getRegionLocation(Bytes.toBytes("")).getPort();
+    }
   }
 
   /**
