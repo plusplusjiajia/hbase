@@ -214,7 +214,7 @@ public class ScannerModel implements ProtobufMessageHandler, Serializable {
     @XmlAttribute public Boolean dropDependentColumn;
     @XmlAttribute public Float chance;
     @XmlElement public List<String> prefixes;
-    @XmlElement public List<RowKeyRange> ranges;
+    @XmlElement private List<RowKeyRange> ranges;
     @XmlElement public List<Long> timestamps;
 
     static enum FilterType {
