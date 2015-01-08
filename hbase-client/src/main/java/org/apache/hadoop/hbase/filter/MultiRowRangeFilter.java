@@ -44,6 +44,7 @@ public class MultiRowRangeFilter extends FilterBase {
 
   private List<RowKeyRange> rangeList;
 
+  private static final int ROW_BEFORE_FIRST_RANGE = -1;
   private boolean done = false;
   private boolean initialized = false;
   private int index;
@@ -88,13 +89,13 @@ public class MultiRowRangeFilter extends FilterBase {
         currentReturnCode = ReturnCode.NEXT_ROW;
         return false;
       }
-      if(index != -1) {
+      if(index != ROW_BEFORE_FIRST_RANGE) {
         range = rangeList.get(index);
       } else {
         range = rangeList.get(0);
       }
       if (!initialized) {
-        if(index != -1) {
+        if(index != ROW_BEFORE_FIRST_RANGE) {
           currentReturnCode = ReturnCode.INCLUDE;
         } else {
           currentReturnCode = ReturnCode.SEEK_NEXT_USING_HINT;
@@ -214,7 +215,7 @@ public class MultiRowRangeFilter extends FilterBase {
       }
       // check if the row key is before the first range
       if (insertionPosition == 0 && !rangeList.get(insertionPosition).contains(rowKey)) {
-        return -1;
+        return ROW_BEFORE_FIRST_RANGE;
       }
       return insertionPosition;
     }
