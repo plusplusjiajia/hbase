@@ -342,19 +342,21 @@ public class MultiRowRangeFilter extends FilterBase {
     return newRanges;
   }
 
-  private static void throwExceptionForInvalidRanges(List<RowKeyRange> invalidRanges, boolean details) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(invalidRanges.size()).append(" invaild ranges.\n");
-      if (details) {
-        for (RowKeyRange range : invalidRanges) {
-          sb.append(
-              "Invalid range: start row => " + Bytes.toString(range.startRow) + ", stop row => "
-                  + Bytes.toString(range.stopRow)).append('\n');
-        }
+  private static void throwExceptionForInvalidRanges(List<RowKeyRange> invalidRanges,
+      boolean details) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(invalidRanges.size()).append(" invaild ranges.\n");
+    if (details) {
+      for (RowKeyRange range : invalidRanges) {
+        sb.append(
+            "Invalid range: start row => " + Bytes.toString(range.startRow) + ", stop row => "
+                + Bytes.toString(range.stopRow)).append('\n');
       }
-      throw new IllegalArgumentException(sb.toString());
+    }
+    throw new IllegalArgumentException(sb.toString());
   }
 
+  @InterfaceAudience.Public
   public static class RowKeyRange implements Comparable<RowKeyRange> {
     private byte[] startRow;
     private byte[] stopRow;
