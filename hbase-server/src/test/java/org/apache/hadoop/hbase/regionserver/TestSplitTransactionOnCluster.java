@@ -41,6 +41,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.CoordinatedStateManager;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -136,7 +137,7 @@ public class TestSplitTransactionOnCluster {
 
   @Before public void setup() throws IOException {
     TESTING_UTIL.ensureSomeNonStoppedRegionServersAvailable(NB_SERVERS);
-    this.admin = new HBaseAdmin(TESTING_UTIL.getConfiguration());
+    this.admin = TESTING_UTIL.getHBaseAdmin();
     this.cluster = TESTING_UTIL.getMiniHBaseCluster();
   }
 
@@ -200,7 +201,10 @@ public class TestSplitTransactionOnCluster {
       this.admin.split(region.getRegionName(), new byte[] {42});
 
       // we have to wait until the SPLITTING state is seen by the master
-      FailingSplitRegionObserver.latch.await();
+      FailingSplitRegionObserver observer = (FailingSplitRegionObserver) region
+          .getCoprocessorHost().findCoprocessor(FailingSplitRegionObserver.class.getName());
+      assertNotNull(observer);
+      observer.latch.await();
 
       LOG.info("Waiting for region to come out of RIT");
       TESTING_UTIL.waitFor(60000, 1000, new Waiter.Predicate<Exception>() {
@@ -220,8 +224,6 @@ public class TestSplitTransactionOnCluster {
   @Test(timeout = 60000)
   public void testSplitFailedCompactionAndSplit() throws Exception {
     final TableName tableName = TableName.valueOf("testSplitFailedCompactionAndSplit");
-    Configuration conf = TESTING_UTIL.getConfiguration();
-    HBaseAdmin admin = new HBaseAdmin(conf);
     // Create table then get the single region for our new table.
     HTableDescriptor htd = new HTableDescriptor(tableName);
     byte[] cf = Bytes.toBytes("cf");
@@ -238,7 +240,7 @@ public class TestSplitTransactionOnCluster {
     int regionServerIndex = cluster.getServerWith(region.getRegionName());
     HRegionServer regionServer = cluster.getRegionServer(regionServerIndex);
 
-    Table t  = new HTable(conf, tableName);
+    Table t = TESTING_UTIL.getConnection().getTable(tableName);
     // insert data
     insertData(tableName, admin, t);
     insertData(tableName, admin, t);
@@ -266,7 +268,11 @@ public class TestSplitTransactionOnCluster {
   }
 
   public static class FailingSplitRegionObserver extends BaseRegionObserver {
-    static volatile CountDownLatch latch = new CountDownLatch(1);
+    volatile CountDownLatch latch;
+    @Override
+    public void start(CoprocessorEnvironment e) throws IOException {
+      latch = new CountDownLatch(1);
+    }
     @Override
     public void preSplitBeforePONR(ObserverContext<RegionCoprocessorEnvironment> ctx,
         byte[] splitKey, List<Mutation> metaEntries) throws IOException {
@@ -472,7 +478,7 @@ public class TestSplitTransactionOnCluster {
     HColumnDescriptor hcd = new HColumnDescriptor("col");
     htd.addFamily(hcd);
     admin.createTable(htd);
-    Table table = new HTable(conf, userTableName);
+    Table table = TESTING_UTIL.getConnection().getTable(userTableName);
     try {
       for (int i = 0; i <= 5; i++) {
         String row = "row" + i;
@@ -582,7 +588,7 @@ public class TestSplitTransactionOnCluster {
 
       HMaster master = abortAndWaitForMaster();
 
-      this.admin = new HBaseAdmin(TESTING_UTIL.getConfiguration());
+      this.admin = TESTING_UTIL.getHBaseAdmin();
 
       // Update the region to be offline and split, so that HRegionInfo#equals
       // returns true in checking rebuilt region states map.
@@ -649,10 +655,19 @@ public class TestSplitTransactionOnCluster {
       tableExists = MetaTableAccessor.tableExists(regionServer.getConnection(),
         tableName);
       assertEquals("The specified table should present.", true, tableExists);
+      Map<String, RegionState> rit = cluster.getMaster().getAssignmentManager().getRegionStates()
+          .getRegionsInTransition();
+      assertTrue(rit.size() == 3);
+      cluster.getMaster().getAssignmentManager().regionOffline(st.getFirstDaughter());
+      cluster.getMaster().getAssignmentManager().regionOffline(st.getSecondDaughter());
+      cluster.getMaster().getAssignmentManager().regionOffline(region.getRegionInfo());
+      rit = cluster.getMaster().getAssignmentManager().getRegionStates().getRegionsInTransition();
+      assertTrue(rit.size() == 0);
     } finally {
       admin.setBalancerRunning(true, false);
       cluster.getMaster().setCatalogJanitorEnabled(true);
       t.close();
+      TESTING_UTIL.deleteTable(tableName);
     }
   }
 
@@ -910,8 +925,8 @@ public class TestSplitTransactionOnCluster {
     Table table1 = null;
     Table table2 = null;
     try {
-      table1 = new HTable(TESTING_UTIL.getConfiguration(), firstTable);
-      table2 = new HTable(TESTING_UTIL.getConfiguration(), firstTable);
+      table1 = TESTING_UTIL.getConnection().getTable(firstTable);
+      table2 = TESTING_UTIL.getConnection().getTable(firstTable);
       insertData(firstTable, admin, table1);
       insertData(secondTable, admin, table2);
       admin.split(firstTable, "row2".getBytes());
