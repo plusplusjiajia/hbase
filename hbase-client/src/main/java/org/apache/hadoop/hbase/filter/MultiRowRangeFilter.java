@@ -52,8 +52,7 @@ public class MultiRowRangeFilter extends FilterBase {
   private ReturnCode currentReturnCode;
 
   /**
-   * @param list
-   *          A list of <code>RowKeyRange</code>
+   * @param list A list of <code>RowKeyRange</code>
    * @throws java.io.IOException
    *           throw an exception if the range list is not in an natural order or any
    *           <code>RowKeyRange</code> is invalid
@@ -139,8 +138,7 @@ public class MultiRowRangeFilter extends FilterBase {
   }
 
   /**
-   * @param pbBytes
-   *          A pb serialized instance
+   * @param pbBytes A pb serialized instance
    * @return An instance of MultiRowRangeFilter
    * @throws org.apache.hadoop.hbase.exceptions.DeserializationException
    */
@@ -169,8 +167,7 @@ public class MultiRowRangeFilter extends FilterBase {
   }
 
   /**
-   * @param o
-   *          the filter to compare
+   * @param o the filter to compare
    * @return true if and only if the fields of the filter that are serialized are equal to the
    *         corresponding fields in other. Used for testing.
    */
