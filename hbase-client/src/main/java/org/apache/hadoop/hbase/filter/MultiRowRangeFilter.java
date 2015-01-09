@@ -51,9 +51,6 @@ public class MultiRowRangeFilter extends FilterBase {
   private RowKeyRange range;
   private ReturnCode currentReturnCode;
 
-  public MultiRowRangeFilter() {
-  }
-
   /**
    * @param list
    *          A list of <code>RowKeyRange</code>
@@ -78,7 +75,7 @@ public class MultiRowRangeFilter extends FilterBase {
   public boolean filterRowKey(byte[] buffer, int offset, int length) {
     // If it is the first time of running, calculate the current range index for
     // the row key. If index is out of bound which happens when the start row
-    // user set is after the largest stop row of the ranges, stop the scan.
+    // user sets is after the largest stop row of the ranges, stop the scan.
     // If row key is after the current range, find the next range and update index.
     if (!initialized || !range.contains(buffer, offset, length)) {
       byte[] rowkey = new byte[length];
@@ -200,8 +197,7 @@ public class MultiRowRangeFilter extends FilterBase {
   /**
    * calculate the position where the row key in the ranges list.
    *
-   * @param rowKey
-   *          the row key to calculate
+   * @param rowKey the row key to calculate
    * @return index the position of the row key
    */
   private int getNextRangeIndex(byte[] rowKey) {
@@ -226,11 +222,10 @@ public class MultiRowRangeFilter extends FilterBase {
   /**
    * sort the ranges and if the ranges with overlap, then merge them.
    *
-   * @param ranges
-   *          the list of range to sort and merge.
-   *
+   * @param ranges the list of ranges to sort and merge.
+   * @return the ranges after sort and merge.
    */
-  public static List<RowKeyRange> sortAndMerge(List<RowKeyRange> ranges) throws IOException {
+  public static List<RowKeyRange> sortAndMerge(List<RowKeyRange> ranges) {
     if (ranges.size() == 0) {
       throw new IllegalArgumentException("No ranges found.");
     }
@@ -341,7 +336,7 @@ public class MultiRowRangeFilter extends FilterBase {
     }
     // if invalid range exists, throw the exception
     if (invalidRanges.size() != 0) {
-      printInvalidRanges(invalidRanges, true);
+      throwExceptionForInvalidRanges(invalidRanges, true);
     }
     // If no valid ranges found, throw the exception
     if(newRanges.size() == 0) {
@@ -350,7 +345,7 @@ public class MultiRowRangeFilter extends FilterBase {
     return newRanges;
   }
 
-  private static void printInvalidRanges(List<RowKeyRange> invalidRanges, boolean details) {
+  private static void throwExceptionForInvalidRanges(List<RowKeyRange> invalidRanges, boolean details) {
       StringBuilder sb = new StringBuilder();
       sb.append(invalidRanges.size()).append(" invaild ranges.\n");
       if (details) {
@@ -363,20 +358,15 @@ public class MultiRowRangeFilter extends FilterBase {
       throw new IllegalArgumentException(sb.toString());
   }
 
-  @InterfaceAudience.Public
-  @InterfaceStability.Evolving
   public static class RowKeyRange implements Comparable<RowKeyRange> {
     private byte[] startRow;
     private byte[] stopRow;
     private int isScan = 0;
 
-    public RowKeyRange() {
-    }
-
     /**
-     * if the startRow is empty or null, set it to HConstants.EMPTY_BYTE_ARRAY, means begin at the
-     * start row of the table if the stopRow is empty or null, set it to
-     * HConstants.EMPTY_BYTE_ARRAY, means end of the last row of table
+     * If the startRow is empty or null, set it to HConstants.EMPTY_BYTE_ARRAY, means begin at the
+     * start row of the table. If the stopRow is empty or null, set it to
+     * HConstants.EMPTY_BYTE_ARRAY, means end of the last row of table.
      */
     public RowKeyRange(String startRow, String stopRow) {
       this((startRow == null || startRow.isEmpty()) ? HConstants.EMPTY_BYTE_ARRAY : Bytes
