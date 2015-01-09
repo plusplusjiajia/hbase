@@ -357,6 +357,7 @@ public class MultiRowRangeFilter extends FilterBase {
   }
 
   @InterfaceAudience.Public
+  @InterfaceStability.Evolving
   public static class RowKeyRange implements Comparable<RowKeyRange> {
     private byte[] startRow;
     private byte[] stopRow;
