@@ -37,6 +37,17 @@ import com.google.protobuf.InvalidProtocolBufferException;
 /**
  * Filter to support scan multiple row key ranges. It can construct the row key ranges from the
  * passed list which can be accessed by each region server.
+ *
+ * HBase is quite efficient when scanning only one small row key range. If user needs to specify
+ * multiple row key ranges in one scan, the typical solutions are: 1. through FilterList which is a
+ * list of row key Filters, 2. using the SQL layer over HBase to join with two table, such as hive,
+ * phoenix etc. However, both solutions are inefficient. Both of them can't utilize the range info
+ * to perform fast forwarding during scan which is quite time consuming. If the number of ranges
+ * are quite big (e.g. millions), join is a proper solution though it is slow. However, there are
+ * cases that user wants to specify a small number of ranges to scan (e.g. <1000 ranges). Both
+ * solutions can't provide satisfactory performance in such case. MultiRowRangeFilter is to support
+ * such usec ase (scan multiple row key ranges), which can construct the row key ranges from user
+ * specified list and perform fast-forwarding during scan. Thus, the scan will be quite efficient.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
@@ -45,6 +56,7 @@ public class MultiRowRangeFilter extends FilterBase {
   private List<RowRange> rangeList;
 
   private static final int ROW_BEFORE_FIRST_RANGE = -1;
+  private static boolean EXCLUSIVE = false;
   private boolean done = false;
   private boolean initialized = false;
   private int index;
@@ -90,16 +102,21 @@ public class MultiRowRangeFilter extends FilterBase {
       } else {
         range = rangeList.get(0);
       }
+      if(EXCLUSIVE) {
+        EXCLUSIVE = false;
+        currentReturnCode = ReturnCode.NEXT_ROW;
+        return false;
+      }
       if (!initialized) {
         if(index != ROW_BEFORE_FIRST_RANGE) {
           currentReturnCode = ReturnCode.INCLUDE;
         } else {
           currentReturnCode = ReturnCode.SEEK_NEXT_USING_HINT;
         }
+        initialized = true;
       } else {
         currentReturnCode = ReturnCode.SEEK_NEXT_USING_HINT;
       }
-      initialized = true;
     } else {
       currentReturnCode = ReturnCode.INCLUDE;
     }
@@ -128,8 +145,10 @@ public class MultiRowRangeFilter extends FilterBase {
         FilterProtos.RowRange.Builder rangebuilder = FilterProtos.RowRange.newBuilder();
         if (range.startRow != null)
           rangebuilder.setStartRow(HBaseZeroCopyByteString.wrap(range.startRow));
+        rangebuilder.setStartRowInclusive(range.startRowInclusive);
         if (range.stopRow != null)
           rangebuilder.setStopRow(HBaseZeroCopyByteString.wrap(range.stopRow));
+        rangebuilder.setStopRowInclusive(range.stopRowInclusive);
         range.isScan = Bytes.equals(range.startRow, range.stopRow) ? 1 : 0;
         builder.addRowRangeList(rangebuilder.build());
       }
@@ -155,8 +174,8 @@ public class MultiRowRangeFilter extends FilterBase {
     List<RowRange> rangeList = new ArrayList<RowRange>(length);
     for (FilterProtos.RowRange rangeProto : rangeProtos) {
       RowRange range = new RowRange(rangeProto.hasStartRow() ? rangeProto.getStartRow()
-          .toByteArray() : null, rangeProto.hasStopRow() ? rangeProto.getStopRow().toByteArray()
-          : null);
+          .toByteArray() : null, rangeProto.getStartRowInclusive(), rangeProto.hasStopRow() ?
+              rangeProto.getStopRow().toByteArray() : null, rangeProto.getStopRowInclusive());
       rangeList.add(range);
     }
     try {
@@ -184,7 +203,9 @@ public class MultiRowRangeFilter extends FilterBase {
       RowRange thisRange = this.rangeList.get(i);
       RowRange otherRange = other.rangeList.get(i);
       if (!(Bytes.equals(thisRange.startRow, otherRange.startRow) && Bytes.equals(
-          thisRange.stopRow, otherRange.stopRow))) {
+          thisRange.stopRow, otherRange.stopRow) && (thisRange.startRowInclusive ==
+          otherRange.startRowInclusive) && (thisRange.stopRowInclusive ==
+          otherRange.stopRowInclusive))) {
         return false;
       }
     }
@@ -198,7 +219,7 @@ public class MultiRowRangeFilter extends FilterBase {
    * @return index the position of the row key
    */
   private int getNextRangeIndex(byte[] rowKey) {
-    RowRange temp = new RowRange(rowKey, null);
+    RowRange temp = new RowRange(rowKey, true, null, true);
     int index = Collections.binarySearch(rangeList, temp);
     if (index < 0) {
       int insertionPosition = -index - 1;
@@ -212,7 +233,10 @@ public class MultiRowRangeFilter extends FilterBase {
       }
       return insertionPosition;
     }
-    // the row key equals one of the start keys
+    // the row key equals one of the start keys, and the the range exclude the start key
+    if(rangeList.get(index).startRowInclusive == false) {
+      EXCLUSIVE = true;
+    }
     return index;
   }
 
@@ -236,8 +260,11 @@ public class MultiRowRangeFilter extends FilterBase {
     } else {
       invalidRanges.add(ranges.get(0));
     }
+
     byte[] lastStartRow = ranges.get(0).startRow;
+    boolean lastStartRowInclusive = ranges.get(0).startRowInclusive;
     byte[] lastStopRow = ranges.get(0).stopRow;
+    boolean lastStopRowInclusive = ranges.get(0).stopRowInclusive;
     int i = 1;
     for (; i < ranges.size(); i++) {
       RowRange range = ranges.get(i);
@@ -245,22 +272,33 @@ public class MultiRowRangeFilter extends FilterBase {
         invalidRanges.add(range);
       }
       if(Bytes.equals(lastStopRow, HConstants.EMPTY_BYTE_ARRAY)) {
-        newRanges.add(new RowRange(lastStartRow, lastStopRow));
+        newRanges.add(new RowRange(lastStartRow, lastStartRowInclusive, lastStopRow,
+            lastStopRowInclusive));
         break;
       }
       // with overlap in the ranges
-      if (Bytes.compareTo(lastStopRow, range.startRow) >= 0) {
+      if ((Bytes.compareTo(lastStopRow, range.startRow) > 0) ||
+          (Bytes.compareTo(lastStopRow, range.startRow) == 0 && !(lastStopRowInclusive == false &&
+          range.isStartRowInclusive() == false))) {
         if(Bytes.equals(range.stopRow, HConstants.EMPTY_BYTE_ARRAY)) {
-          newRanges.add(new RowRange(lastStartRow, range.stopRow));
+          newRanges.add(new RowRange(lastStartRow, lastStartRowInclusive, range.stopRow,
+              range.stopRowInclusive));
           break;
         }
         // if first range contains second range, ignore the second range
         if (Bytes.compareTo(lastStopRow, range.stopRow) >= 0) {
+          if((Bytes.compareTo(lastStopRow, range.stopRow) == 0)) {
+            if(lastStopRowInclusive == true || range.stopRowInclusive == true) {
+              lastStopRowInclusive = true;
+            }
+          }
           if ((i + 1) == ranges.size()) {
-            newRanges.add(new RowRange(lastStartRow, lastStopRow));
+            newRanges.add(new RowRange(lastStartRow, lastStartRowInclusive, lastStopRow,
+                lastStopRowInclusive));
           }
         } else {
           lastStopRow = range.stopRow;
+          lastStopRowInclusive = range.stopRowInclusive;
           if ((i + 1) < ranges.size()) {
             i++;
             range = ranges.get(i);
@@ -268,15 +306,21 @@ public class MultiRowRangeFilter extends FilterBase {
               invalidRanges.add(range);
             }
           } else {
-            newRanges.add(new RowRange(lastStartRow, lastStopRow));
+            newRanges.add(new RowRange(lastStartRow, lastStartRowInclusive, lastStopRow,
+                lastStopRowInclusive));
             break;
           }
-          while (Bytes.compareTo(lastStopRow, range.startRow) >= 0) {
+          while ((Bytes.compareTo(lastStopRow, range.startRow) > 0) ||
+              (Bytes.compareTo(lastStopRow, range.startRow) == 0 &&
+              (lastStopRowInclusive == true || range.startRowInclusive==true))) {
             if(Bytes.equals(range.stopRow, HConstants.EMPTY_BYTE_ARRAY)) {
               break;
             }
             // if this first range contain second range, ignore the second range
             if (Bytes.compareTo(lastStopRow, range.stopRow) >= 0) {
+              if(lastStopRowInclusive == true || range.stopRowInclusive == true) {
+                lastStopRowInclusive = true;
+              }
               i++;
               if (i < ranges.size()) {
                 range = ranges.get(i);
@@ -288,6 +332,7 @@ public class MultiRowRangeFilter extends FilterBase {
               }
             } else {
               lastStopRow = range.stopRow;
+              lastStopRowInclusive = range.stopRowInclusive;
               i++;
               if (i < ranges.size()) {
                 range = ranges.get(i);
@@ -300,29 +345,38 @@ public class MultiRowRangeFilter extends FilterBase {
             }
           }
           if(Bytes.equals(range.stopRow, HConstants.EMPTY_BYTE_ARRAY)) {
-            if(Bytes.compareTo(lastStopRow, range.startRow) < 0)
-            {
-              newRanges.add(new RowRange(lastStartRow, lastStopRow));
+            if((Bytes.compareTo(lastStopRow, range.startRow) < 0) ||
+                (Bytes.compareTo(lastStopRow, range.startRow) == 0 &&
+                lastStopRowInclusive == false && range.startRowInclusive == false)) {
+              newRanges.add(new RowRange(lastStartRow, lastStartRowInclusive, lastStopRow,
+                  lastStopRowInclusive));
               newRanges.add(range);
             } else {
-              newRanges.add(new RowRange(lastStartRow, range.stopRow));
+              newRanges.add(new RowRange(lastStartRow, lastStartRowInclusive, range.stopRow,
+                  range.stopRowInclusive));
               break;
             }
           }
-          newRanges.add(new RowRange(lastStartRow, lastStopRow));
-          lastStartRow = range.startRow;
-          lastStopRow = range.stopRow;
+          newRanges.add(new RowRange(lastStartRow, lastStartRowInclusive, lastStopRow,
+              lastStopRowInclusive));
           if ((i + 1) == ranges.size()) {
-            newRanges.add(new RowRange(lastStartRow, lastStopRow));
+            newRanges.add(range);
           }
+          lastStartRow = range.startRow;
+          lastStartRowInclusive = range.startRowInclusive;
+          lastStopRow = range.stopRow;
+          lastStopRowInclusive = range.stopRowInclusive;
         }
       } else {
-        newRanges.add(new RowRange(lastStartRow, lastStopRow));
-        lastStartRow = range.startRow;
-        lastStopRow = range.stopRow;
+        newRanges.add(new RowRange(lastStartRow, lastStartRowInclusive, lastStopRow,
+            lastStopRowInclusive));
         if ((i + 1) == ranges.size()) {
-          newRanges.add(new RowRange(lastStartRow, lastStopRow));
+          newRanges.add(range);
         }
+        lastStartRow = range.startRow;
+        lastStartRowInclusive = range.startRowInclusive;
+        lastStopRow = range.stopRow;
+        lastStopRowInclusive = range.stopRowInclusive;
       }
     }
     // check the remaining ranges
@@ -360,7 +414,9 @@ public class MultiRowRangeFilter extends FilterBase {
   @InterfaceStability.Evolving
   public static class RowRange implements Comparable<RowRange> {
     private byte[] startRow;
+    private boolean startRowInclusive = true;
     private byte[] stopRow;
+    private boolean stopRowInclusive = false;
     private int isScan = 0;
 
     /**
@@ -368,15 +424,20 @@ public class MultiRowRangeFilter extends FilterBase {
      * start row of the table. If the stopRow is empty or null, set it to
      * HConstants.EMPTY_BYTE_ARRAY, means end of the last row of table.
      */
-    public RowRange(String startRow, String stopRow) {
-      this((startRow == null || startRow.isEmpty()) ? HConstants.EMPTY_BYTE_ARRAY : Bytes
-          .toBytes(startRow), (stopRow == null || stopRow.isEmpty()) ? HConstants.EMPTY_BYTE_ARRAY
-          : Bytes.toBytes(stopRow));
+    public RowRange(String startRow, boolean startRowInclusive, String stopRow,
+        boolean stopRowInclusive) {
+      this((startRow == null || startRow.isEmpty()) ? HConstants.EMPTY_BYTE_ARRAY :
+        Bytes.toBytes(startRow), startRowInclusive,
+        (stopRow == null || stopRow.isEmpty()) ? HConstants.EMPTY_BYTE_ARRAY :
+        Bytes.toBytes(stopRow), stopRowInclusive);
     }
 
-    public RowRange(byte[] startRow, byte[] stopRow) {
+    public RowRange(byte[] startRow,  boolean startRowInclusive, byte[] stopRow,
+        boolean stopRowInclusive) {
       this.startRow = (startRow == null) ? HConstants.EMPTY_BYTE_ARRAY : startRow;
+      this.startRowInclusive = startRowInclusive;
       this.stopRow = (stopRow == null) ? HConstants.EMPTY_BYTE_ARRAY :stopRow;
+      this.stopRowInclusive = stopRowInclusive;
       isScan = Bytes.equals(startRow, stopRow) ? 1 : 0;
     }
 
@@ -388,14 +449,46 @@ public class MultiRowRangeFilter extends FilterBase {
       return stopRow;
     }
 
+    /**
+     * @return if start row is inclusive.
+     */
+    public boolean isStartRowInclusive() {
+      return startRowInclusive;
+    }
+
+    /**
+     * @return if stop row is inclusive.
+     */
+    public boolean isStopRowInclusive() {
+      return stopRowInclusive;
+    }
+
     public boolean contains(byte[] row) {
       return contains(row, 0, row.length);
     }
 
     public boolean contains(byte[] buffer, int offset, int length) {
-      return Bytes.compareTo(buffer, offset, length, startRow, 0, startRow.length) >= 0
-          && (Bytes.equals(stopRow, HConstants.EMPTY_BYTE_ARRAY) || Bytes.compareTo(buffer, offset,
-              length, stopRow, 0, stopRow.length) < isScan);
+      if(startRowInclusive) {
+        if(stopRowInclusive) {
+          return Bytes.compareTo(buffer, offset, length, startRow, 0, startRow.length) >= 0
+              && (Bytes.equals(stopRow, HConstants.EMPTY_BYTE_ARRAY) ||
+                  Bytes.compareTo(buffer, offset, length, stopRow, 0, stopRow.length) <= isScan);
+        } else {
+          return Bytes.compareTo(buffer, offset, length, startRow, 0, startRow.length) >= 0
+              && (Bytes.equals(stopRow, HConstants.EMPTY_BYTE_ARRAY) ||
+                  Bytes.compareTo(buffer, offset, length, stopRow, 0, stopRow.length) < isScan);
+        }
+      } else {
+        if(stopRowInclusive) {
+          return Bytes.compareTo(buffer, offset, length, startRow, 0, startRow.length) > 0
+              && (Bytes.equals(stopRow, HConstants.EMPTY_BYTE_ARRAY) ||
+                  Bytes.compareTo(buffer, offset, length, stopRow, 0, stopRow.length) <= isScan);
+        } else {
+          return Bytes.compareTo(buffer, offset, length, startRow, 0, startRow.length) > 0
+              && (Bytes.equals(stopRow, HConstants.EMPTY_BYTE_ARRAY) ||
+                  Bytes.compareTo(buffer, offset, length, stopRow, 0, stopRow.length) < isScan);
+        }
+      }
     }
 
     @Override
@@ -406,7 +499,8 @@ public class MultiRowRangeFilter extends FilterBase {
     public boolean isValid() {
       return Bytes.equals(startRow, HConstants.EMPTY_BYTE_ARRAY)
           || Bytes.equals(stopRow, HConstants.EMPTY_BYTE_ARRAY)
-          || Bytes.compareTo(startRow, stopRow) <= 0;
+          || Bytes.compareTo(startRow, stopRow) < 0
+          || (Bytes.compareTo(startRow, stopRow) == 0 && stopRowInclusive == true);
     }
   }
 }

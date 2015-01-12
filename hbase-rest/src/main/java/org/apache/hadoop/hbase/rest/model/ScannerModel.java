@@ -53,7 +53,7 @@ import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.InclusiveStopFilter;
 import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.MultiRowRangeFilter;
-import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowKeyRange;
+import org.apache.hadoop.hbase.filter.MultiRowRangeFilter.RowRange;
 import org.apache.hadoop.hbase.filter.MultipleColumnPrefixFilter;
 import org.apache.hadoop.hbase.filter.NullComparator;
 import org.apache.hadoop.hbase.filter.PageFilter;
@@ -214,7 +214,7 @@ public class ScannerModel implements ProtobufMessageHandler, Serializable {
     @XmlAttribute public Boolean dropDependentColumn;
     @XmlAttribute public Float chance;
     @XmlElement public List<String> prefixes;
-    @XmlElement private List<RowKeyRange> ranges;
+    @XmlElement private List<RowRange> ranges;
     @XmlElement public List<Long> timestamps;
 
     static enum FilterType {
@@ -298,10 +298,11 @@ public class ScannerModel implements ProtobufMessageHandler, Serializable {
           }
           break;
         case MultiRowRangeFilter:
-          this.ranges = new ArrayList<RowKeyRange>();
-          for(RowKeyRange range : ((MultiRowRangeFilter)filter).getRowRanges()) {
-            ranges.add(new RowKeyRange(Base64.encodeBytes(range.getStartRow()),
-                Base64.encodeBytes(range.getStopRow())));
+          this.ranges = new ArrayList<RowRange>();
+          for(RowRange range : ((MultiRowRangeFilter)filter).getRowRanges()) {
+            ranges.add(new RowRange(Base64.encodeBytes(range.getStartRow()),
+                range.isStartRowInclusive(), Base64.encodeBytes(range.getStopRow()),
+                range.isStopRowInclusive()));
           }
           break;
         case PageFilter:
@@ -406,10 +407,12 @@ public class ScannerModel implements ProtobufMessageHandler, Serializable {
         filter = new MultipleColumnPrefixFilter(values);
       } break;
       case MultiRowRangeFilter: {
-        List<RowKeyRange> values = new ArrayList<RowKeyRange>(ranges.size());
+        List<RowRange> values = new ArrayList<RowRange>(ranges.size());
         for (int i = 0; i < ranges.size(); i++) {
-          values.add(new RowKeyRange(Base64.decode(Bytes.toString(ranges.get(i).getStartRow())),
-              Base64.decode(Bytes.toString(ranges.get(i).getStopRow()))));
+          values.add(new RowRange(Base64.decode(Bytes.toString(ranges.get(i).getStartRow())),
+              ranges.get(i).isStartRowInclusive(),
+              Base64.decode(Bytes.toString(ranges.get(i).getStopRow())),
+              ranges.get(i).isStopRowInclusive()));
         }
         try {
           filter = new MultiRowRangeFilter(values);

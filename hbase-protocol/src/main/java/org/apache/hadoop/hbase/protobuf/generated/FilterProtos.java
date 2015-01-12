@@ -15894,15 +15894,35 @@ public final class FilterProtos {
      */
     com.google.protobuf.ByteString getStartRow();
 
-    // optional bytes stop_row = 2;
+    // optional bool start_row_inclusive = 2;
     /**
-     * <code>optional bytes stop_row = 2;</code>
+     * <code>optional bool start_row_inclusive = 2;</code>
+     */
+    boolean hasStartRowInclusive();
+    /**
+     * <code>optional bool start_row_inclusive = 2;</code>
+     */
+    boolean getStartRowInclusive();
+
+    // optional bytes stop_row = 3;
+    /**
+     * <code>optional bytes stop_row = 3;</code>
      */
     boolean hasStopRow();
     /**
-     * <code>optional bytes stop_row = 2;</code>
+     * <code>optional bytes stop_row = 3;</code>
      */
     com.google.protobuf.ByteString getStopRow();
+
+    // optional bool stop_row_inclusive = 4;
+    /**
+     * <code>optional bool stop_row_inclusive = 4;</code>
+     */
+    boolean hasStopRowInclusive();
+    /**
+     * <code>optional bool stop_row_inclusive = 4;</code>
+     */
+    boolean getStopRowInclusive();
   }
   /**
    * Protobuf type {@code RowRange}
@@ -15960,9 +15980,19 @@ public final class FilterProtos {
               startRow_ = input.readBytes();
               break;
             }
-            case 18: {
+            case 16: {
               bitField0_ |= 0x00000002;
+              startRowInclusive_ = input.readBool();
+              break;
+            }
+            case 26: {
+              bitField0_ |= 0x00000004;
               stopRow_ = input.readBytes();
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000008;
+              stopRowInclusive_ = input.readBool();
               break;
             }
           }
@@ -16021,25 +16051,59 @@ public final class FilterProtos {
       return startRow_;
     }
 
-    // optional bytes stop_row = 2;
-    public static final int STOP_ROW_FIELD_NUMBER = 2;
-    private com.google.protobuf.ByteString stopRow_;
+    // optional bool start_row_inclusive = 2;
+    public static final int START_ROW_INCLUSIVE_FIELD_NUMBER = 2;
+    private boolean startRowInclusive_;
     /**
-     * <code>optional bytes stop_row = 2;</code>
+     * <code>optional bool start_row_inclusive = 2;</code>
      */
-    public boolean hasStopRow() {
+    public boolean hasStartRowInclusive() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional bytes stop_row = 2;</code>
+     * <code>optional bool start_row_inclusive = 2;</code>
+     */
+    public boolean getStartRowInclusive() {
+      return startRowInclusive_;
+    }
+
+    // optional bytes stop_row = 3;
+    public static final int STOP_ROW_FIELD_NUMBER = 3;
+    private com.google.protobuf.ByteString stopRow_;
+    /**
+     * <code>optional bytes stop_row = 3;</code>
+     */
+    public boolean hasStopRow() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional bytes stop_row = 3;</code>
      */
     public com.google.protobuf.ByteString getStopRow() {
       return stopRow_;
     }
 
+    // optional bool stop_row_inclusive = 4;
+    public static final int STOP_ROW_INCLUSIVE_FIELD_NUMBER = 4;
+    private boolean stopRowInclusive_;
+    /**
+     * <code>optional bool stop_row_inclusive = 4;</code>
+     */
+    public boolean hasStopRowInclusive() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional bool stop_row_inclusive = 4;</code>
+     */
+    public boolean getStopRowInclusive() {
+      return stopRowInclusive_;
+    }
+
     private void initFields() {
       startRow_ = com.google.protobuf.ByteString.EMPTY;
+      startRowInclusive_ = false;
       stopRow_ = com.google.protobuf.ByteString.EMPTY;
+      stopRowInclusive_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -16057,7 +16121,13 @@ public final class FilterProtos {
         output.writeBytes(1, startRow_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, stopRow_);
+        output.writeBool(2, startRowInclusive_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBytes(3, stopRow_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeBool(4, stopRowInclusive_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -16074,7 +16144,15 @@ public final class FilterProtos {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, stopRow_);
+          .computeBoolSize(2, startRowInclusive_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(3, stopRow_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(4, stopRowInclusive_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -16104,10 +16182,20 @@ public final class FilterProtos {
         result = result && getStartRow()
             .equals(other.getStartRow());
       }
+      result = result && (hasStartRowInclusive() == other.hasStartRowInclusive());
+      if (hasStartRowInclusive()) {
+        result = result && (getStartRowInclusive()
+            == other.getStartRowInclusive());
+      }
       result = result && (hasStopRow() == other.hasStopRow());
       if (hasStopRow()) {
         result = result && getStopRow()
             .equals(other.getStopRow());
+      }
+      result = result && (hasStopRowInclusive() == other.hasStopRowInclusive());
+      if (hasStopRowInclusive()) {
+        result = result && (getStopRowInclusive()
+            == other.getStopRowInclusive());
       }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
@@ -16126,9 +16214,17 @@ public final class FilterProtos {
         hash = (37 * hash) + START_ROW_FIELD_NUMBER;
         hash = (53 * hash) + getStartRow().hashCode();
       }
+      if (hasStartRowInclusive()) {
+        hash = (37 * hash) + START_ROW_INCLUSIVE_FIELD_NUMBER;
+        hash = (53 * hash) + hashBoolean(getStartRowInclusive());
+      }
       if (hasStopRow()) {
         hash = (37 * hash) + STOP_ROW_FIELD_NUMBER;
         hash = (53 * hash) + getStopRow().hashCode();
+      }
+      if (hasStopRowInclusive()) {
+        hash = (37 * hash) + STOP_ROW_INCLUSIVE_FIELD_NUMBER;
+        hash = (53 * hash) + hashBoolean(getStopRowInclusive());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -16241,8 +16337,12 @@ public final class FilterProtos {
         super.clear();
         startRow_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
-        stopRow_ = com.google.protobuf.ByteString.EMPTY;
+        startRowInclusive_ = false;
         bitField0_ = (bitField0_ & ~0x00000002);
+        stopRow_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        stopRowInclusive_ = false;
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
 
@@ -16278,7 +16378,15 @@ public final class FilterProtos {
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
+        result.startRowInclusive_ = startRowInclusive_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
         result.stopRow_ = stopRow_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.stopRowInclusive_ = stopRowInclusive_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -16298,8 +16406,14 @@ public final class FilterProtos {
         if (other.hasStartRow()) {
           setStartRow(other.getStartRow());
         }
+        if (other.hasStartRowInclusive()) {
+          setStartRowInclusive(other.getStartRowInclusive());
+        }
         if (other.hasStopRow()) {
           setStopRow(other.getStopRow());
+        }
+        if (other.hasStopRowInclusive()) {
+          setStopRowInclusive(other.getStopRowInclusive());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -16364,38 +16478,104 @@ public final class FilterProtos {
         return this;
       }
 
-      // optional bytes stop_row = 2;
-      private com.google.protobuf.ByteString stopRow_ = com.google.protobuf.ByteString.EMPTY;
+      // optional bool start_row_inclusive = 2;
+      private boolean startRowInclusive_ ;
       /**
-       * <code>optional bytes stop_row = 2;</code>
+       * <code>optional bool start_row_inclusive = 2;</code>
        */
-      public boolean hasStopRow() {
+      public boolean hasStartRowInclusive() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional bytes stop_row = 2;</code>
+       * <code>optional bool start_row_inclusive = 2;</code>
+       */
+      public boolean getStartRowInclusive() {
+        return startRowInclusive_;
+      }
+      /**
+       * <code>optional bool start_row_inclusive = 2;</code>
+       */
+      public Builder setStartRowInclusive(boolean value) {
+        bitField0_ |= 0x00000002;
+        startRowInclusive_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool start_row_inclusive = 2;</code>
+       */
+      public Builder clearStartRowInclusive() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        startRowInclusive_ = false;
+        onChanged();
+        return this;
+      }
+
+      // optional bytes stop_row = 3;
+      private com.google.protobuf.ByteString stopRow_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes stop_row = 3;</code>
+       */
+      public boolean hasStopRow() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional bytes stop_row = 3;</code>
        */
       public com.google.protobuf.ByteString getStopRow() {
         return stopRow_;
       }
       /**
-       * <code>optional bytes stop_row = 2;</code>
+       * <code>optional bytes stop_row = 3;</code>
        */
       public Builder setStopRow(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000004;
         stopRow_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional bytes stop_row = 2;</code>
+       * <code>optional bytes stop_row = 3;</code>
        */
       public Builder clearStopRow() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000004);
         stopRow_ = getDefaultInstance().getStopRow();
+        onChanged();
+        return this;
+      }
+
+      // optional bool stop_row_inclusive = 4;
+      private boolean stopRowInclusive_ ;
+      /**
+       * <code>optional bool stop_row_inclusive = 4;</code>
+       */
+      public boolean hasStopRowInclusive() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>optional bool stop_row_inclusive = 4;</code>
+       */
+      public boolean getStopRowInclusive() {
+        return stopRowInclusive_;
+      }
+      /**
+       * <code>optional bool stop_row_inclusive = 4;</code>
+       */
+      public Builder setStopRowInclusive(boolean value) {
+        bitField0_ |= 0x00000008;
+        stopRowInclusive_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool stop_row_inclusive = 4;</code>
+       */
+      public Builder clearStopRowInclusive() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        stopRowInclusive_ = false;
         onChanged();
         return this;
       }
@@ -17324,11 +17504,13 @@ public final class FilterProtos {
       "\022\026\n\ntimestamps\030\001 \003(\003B\002\020\001\"5\n\013ValueFilter\022" +
       "&\n\016compare_filter\030\001 \002(\0132\016.CompareFilter\"" +
       "+\n\020WhileMatchFilter\022\027\n\006filter\030\001 \002(\0132\007.Fi" +
-      "lter\"\021\n\017FilterAllFilter\"/\n\010RowRange\022\021\n\ts" +
-      "tart_row\030\001 \001(\014\022\020\n\010stop_row\030\002 \001(\014\"8\n\023Mult" +
-      "iRowRangeFilter\022!\n\016row_range_list\030\001 \003(\0132" +
-      "\t.RowRangeBB\n*org.apache.hadoop.hbase.pr" +
-      "otobuf.generatedB\014FilterProtosH\001\210\001\001\240\001\001"
+      "lter\"\021\n\017FilterAllFilter\"h\n\010RowRange\022\021\n\ts" +
+      "tart_row\030\001 \001(\014\022\033\n\023start_row_inclusive\030\002 " +
+      "\001(\010\022\020\n\010stop_row\030\003 \001(\014\022\032\n\022stop_row_inclus" +
+      "ive\030\004 \001(\010\"8\n\023MultiRowRangeFilter\022!\n\016row_" +
+      "range_list\030\001 \003(\0132\t.RowRangeBB\n*org.apach",
+      "e.hadoop.hbase.protobuf.generatedB\014Filte" +
+      "rProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -17508,7 +17690,7 @@ public final class FilterProtos {
           internal_static_RowRange_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_RowRange_descriptor,
-              new java.lang.String[] { "StartRow", "StopRow", });
+              new java.lang.String[] { "StartRow", "StartRowInclusive", "StopRow", "StopRowInclusive", });
           internal_static_MultiRowRangeFilter_descriptor =
             getDescriptor().getMessageTypes().get(29);
           internal_static_MultiRowRangeFilter_fieldAccessorTable = new
