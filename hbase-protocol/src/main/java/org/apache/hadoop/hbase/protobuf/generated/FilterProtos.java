@@ -15881,7 +15881,7 @@ public final class FilterProtos {
     // @@protoc_insertion_point(class_scope:FilterAllFilter)
   }
 
-  public interface RowKeyRangeOrBuilder
+  public interface RowRangeOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
     // optional bytes start_row = 1;
@@ -15905,24 +15905,24 @@ public final class FilterProtos {
     com.google.protobuf.ByteString getStopRow();
   }
   /**
-   * Protobuf type {@code RowKeyRange}
+   * Protobuf type {@code RowRange}
    */
-  public static final class RowKeyRange extends
+  public static final class RowRange extends
       com.google.protobuf.GeneratedMessage
-      implements RowKeyRangeOrBuilder {
-    // Use RowKeyRange.newBuilder() to construct.
-    private RowKeyRange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      implements RowRangeOrBuilder {
+    // Use RowRange.newBuilder() to construct.
+    private RowRange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private RowKeyRange(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private RowRange(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final RowKeyRange defaultInstance;
-    public static RowKeyRange getDefaultInstance() {
+    private static final RowRange defaultInstance;
+    public static RowRange getDefaultInstance() {
       return defaultInstance;
     }
 
-    public RowKeyRange getDefaultInstanceForType() {
+    public RowRange getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -15932,7 +15932,7 @@ public final class FilterProtos {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private RowKeyRange(
+    private RowRange(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -15979,28 +15979,28 @@ public final class FilterProtos {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowKeyRange_descriptor;
+      return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowRange_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowKeyRange_fieldAccessorTable
+      return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowRange_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.class, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder.class);
+              org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.class, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<RowKeyRange> PARSER =
-        new com.google.protobuf.AbstractParser<RowKeyRange>() {
-      public RowKeyRange parsePartialFrom(
+    public static com.google.protobuf.Parser<RowRange> PARSER =
+        new com.google.protobuf.AbstractParser<RowRange>() {
+      public RowRange parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new RowKeyRange(input, extensionRegistry);
+        return new RowRange(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<RowKeyRange> getParserForType() {
+    public com.google.protobuf.Parser<RowRange> getParserForType() {
       return PARSER;
     }
 
@@ -16093,10 +16093,10 @@ public final class FilterProtos {
       if (obj == this) {
        return true;
       }
-      if (!(obj instanceof org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange)) {
+      if (!(obj instanceof org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange)) {
         return super.equals(obj);
       }
-      org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange other = (org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange) obj;
+      org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange other = (org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange) obj;
 
       boolean result = true;
       result = result && (hasStartRow() == other.hasStartRow());
@@ -16135,53 +16135,53 @@ public final class FilterProtos {
       return hash;
     }
 
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseFrom(
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseFrom(
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseFrom(byte[] data)
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseFrom(
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseFrom(java.io.InputStream input)
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseFrom(
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseDelimitedFrom(java.io.InputStream input)
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseDelimitedFrom(
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseFrom(
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parseFrom(
+    public static org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -16190,7 +16190,7 @@ public final class FilterProtos {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange prototype) {
+    public static Builder newBuilder(org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -16202,24 +16202,24 @@ public final class FilterProtos {
       return builder;
     }
     /**
-     * Protobuf type {@code RowKeyRange}
+     * Protobuf type {@code RowRange}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder {
+       implements org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowKeyRange_descriptor;
+        return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowRange_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowKeyRange_fieldAccessorTable
+        return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowRange_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.class, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder.class);
+                org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.class, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder.class);
       }
 
-      // Construct using org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.newBuilder()
+      // Construct using org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -16252,23 +16252,23 @@ public final class FilterProtos {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowKeyRange_descriptor;
+        return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.internal_static_RowRange_descriptor;
       }
 
-      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange getDefaultInstanceForType() {
-        return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.getDefaultInstance();
+      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange getDefaultInstanceForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.getDefaultInstance();
       }
 
-      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange build() {
-        org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange result = buildPartial();
+      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange build() {
+        org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange buildPartial() {
-        org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange result = new org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange(this);
+      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange buildPartial() {
+        org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange result = new org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
@@ -16285,16 +16285,16 @@ public final class FilterProtos {
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange) {
-          return mergeFrom((org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange)other);
+        if (other instanceof org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange) {
+          return mergeFrom((org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange other) {
-        if (other == org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.getDefaultInstance()) return this;
+      public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange other) {
+        if (other == org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.getDefaultInstance()) return this;
         if (other.hasStartRow()) {
           setStartRow(other.getStartRow());
         }
@@ -16313,11 +16313,11 @@ public final class FilterProtos {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange parsedMessage = null;
+        org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange) e.getUnfinishedMessage();
+          parsedMessage = (org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -16400,43 +16400,43 @@ public final class FilterProtos {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:RowKeyRange)
+      // @@protoc_insertion_point(builder_scope:RowRange)
     }
 
     static {
-      defaultInstance = new RowKeyRange(true);
+      defaultInstance = new RowRange(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:RowKeyRange)
+    // @@protoc_insertion_point(class_scope:RowRange)
   }
 
   public interface MultiRowRangeFilterOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // repeated .RowKeyRange row_key_range_list = 1;
+    // repeated .RowRange row_range_list = 1;
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange>
-        getRowKeyRangeListList();
+    java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange> 
+        getRowRangeListList();
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange getRowKeyRangeList(int index);
+    org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange getRowRangeList(int index);
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    int getRowKeyRangeListCount();
+    int getRowRangeListCount();
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder>
-        getRowKeyRangeListOrBuilderList();
+    java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder>
+        getRowRangeListOrBuilderList();
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder getRowKeyRangeListOrBuilder(
+    org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder getRowRangeListOrBuilder(
         int index);
   }
   /**
@@ -16492,10 +16492,10 @@ public final class FilterProtos {
             }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                rowKeyRangeList_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange>();
+                rowRangeList_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              rowKeyRangeList_.add(input.readMessage(org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.PARSER, extensionRegistry));
+              rowRangeList_.add(input.readMessage(org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.PARSER, extensionRegistry));
               break;
             }
           }
@@ -16507,7 +16507,7 @@ public final class FilterProtos {
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-          rowKeyRangeList_ = java.util.Collections.unmodifiableList(rowKeyRangeList_);
+          rowRangeList_ = java.util.Collections.unmodifiableList(rowRangeList_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -16540,44 +16540,44 @@ public final class FilterProtos {
       return PARSER;
     }
 
-    // repeated .RowKeyRange row_key_range_list = 1;
-    public static final int ROW_KEY_RANGE_LIST_FIELD_NUMBER = 1;
-    private java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange> rowKeyRangeList_;
+    // repeated .RowRange row_range_list = 1;
+    public static final int ROW_RANGE_LIST_FIELD_NUMBER = 1;
+    private java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange> rowRangeList_;
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    public java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange> getRowKeyRangeListList() {
-      return rowKeyRangeList_;
+    public java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange> getRowRangeListList() {
+      return rowRangeList_;
     }
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder>
-        getRowKeyRangeListOrBuilderList() {
-      return rowKeyRangeList_;
+    public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder> 
+        getRowRangeListOrBuilderList() {
+      return rowRangeList_;
     }
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    public int getRowKeyRangeListCount() {
-      return rowKeyRangeList_.size();
+    public int getRowRangeListCount() {
+      return rowRangeList_.size();
     }
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange getRowKeyRangeList(int index) {
-      return rowKeyRangeList_.get(index);
+    public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange getRowRangeList(int index) {
+      return rowRangeList_.get(index);
     }
     /**
-     * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+     * <code>repeated .RowRange row_range_list = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder getRowKeyRangeListOrBuilder(
+    public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder getRowRangeListOrBuilder(
         int index) {
-      return rowKeyRangeList_.get(index);
+      return rowRangeList_.get(index);
     }
 
     private void initFields() {
-      rowKeyRangeList_ = java.util.Collections.emptyList();
+      rowRangeList_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -16591,8 +16591,8 @@ public final class FilterProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      for (int i = 0; i < rowKeyRangeList_.size(); i++) {
-        output.writeMessage(1, rowKeyRangeList_.get(i));
+      for (int i = 0; i < rowRangeList_.size(); i++) {
+        output.writeMessage(1, rowRangeList_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -16603,9 +16603,9 @@ public final class FilterProtos {
       if (size != -1) return size;
 
       size = 0;
-      for (int i = 0; i < rowKeyRangeList_.size(); i++) {
+      for (int i = 0; i < rowRangeList_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, rowKeyRangeList_.get(i));
+          .computeMessageSize(1, rowRangeList_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -16630,8 +16630,8 @@ public final class FilterProtos {
       org.apache.hadoop.hbase.protobuf.generated.FilterProtos.MultiRowRangeFilter other = (org.apache.hadoop.hbase.protobuf.generated.FilterProtos.MultiRowRangeFilter) obj;
 
       boolean result = true;
-      result = result && getRowKeyRangeListList()
-          .equals(other.getRowKeyRangeListList());
+      result = result && getRowRangeListList()
+          .equals(other.getRowRangeListList());
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -16645,9 +16645,9 @@ public final class FilterProtos {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptorForType().hashCode();
-      if (getRowKeyRangeListCount() > 0) {
-        hash = (37 * hash) + ROW_KEY_RANGE_LIST_FIELD_NUMBER;
-        hash = (53 * hash) + getRowKeyRangeListList().hashCode();
+      if (getRowRangeListCount() > 0) {
+        hash = (37 * hash) + ROW_RANGE_LIST_FIELD_NUMBER;
+        hash = (53 * hash) + getRowRangeListList().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -16750,7 +16750,7 @@ public final class FilterProtos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getRowKeyRangeListFieldBuilder();
+          getRowRangeListFieldBuilder();
         }
       }
       private static Builder create() {
@@ -16759,11 +16759,11 @@ public final class FilterProtos {
 
       public Builder clear() {
         super.clear();
-        if (rowKeyRangeListBuilder_ == null) {
-          rowKeyRangeList_ = java.util.Collections.emptyList();
+        if (rowRangeListBuilder_ == null) {
+          rowRangeList_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          rowKeyRangeListBuilder_.clear();
+          rowRangeListBuilder_.clear();
         }
         return this;
       }
@@ -16792,14 +16792,14 @@ public final class FilterProtos {
       public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.MultiRowRangeFilter buildPartial() {
         org.apache.hadoop.hbase.protobuf.generated.FilterProtos.MultiRowRangeFilter result = new org.apache.hadoop.hbase.protobuf.generated.FilterProtos.MultiRowRangeFilter(this);
         int from_bitField0_ = bitField0_;
-        if (rowKeyRangeListBuilder_ == null) {
+        if (rowRangeListBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            rowKeyRangeList_ = java.util.Collections.unmodifiableList(rowKeyRangeList_);
+            rowRangeList_ = java.util.Collections.unmodifiableList(rowRangeList_);
             bitField0_ = (bitField0_ & ~0x00000001);
           }
-          result.rowKeyRangeList_ = rowKeyRangeList_;
+          result.rowRangeList_ = rowRangeList_;
         } else {
-          result.rowKeyRangeList_ = rowKeyRangeListBuilder_.build();
+          result.rowRangeList_ = rowRangeListBuilder_.build();
         }
         onBuilt();
         return result;
@@ -16816,29 +16816,29 @@ public final class FilterProtos {
 
       public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.FilterProtos.MultiRowRangeFilter other) {
         if (other == org.apache.hadoop.hbase.protobuf.generated.FilterProtos.MultiRowRangeFilter.getDefaultInstance()) return this;
-        if (rowKeyRangeListBuilder_ == null) {
-          if (!other.rowKeyRangeList_.isEmpty()) {
-            if (rowKeyRangeList_.isEmpty()) {
-              rowKeyRangeList_ = other.rowKeyRangeList_;
+        if (rowRangeListBuilder_ == null) {
+          if (!other.rowRangeList_.isEmpty()) {
+            if (rowRangeList_.isEmpty()) {
+              rowRangeList_ = other.rowRangeList_;
               bitField0_ = (bitField0_ & ~0x00000001);
             } else {
-              ensureRowKeyRangeListIsMutable();
-              rowKeyRangeList_.addAll(other.rowKeyRangeList_);
+              ensureRowRangeListIsMutable();
+              rowRangeList_.addAll(other.rowRangeList_);
             }
             onChanged();
           }
         } else {
-          if (!other.rowKeyRangeList_.isEmpty()) {
-            if (rowKeyRangeListBuilder_.isEmpty()) {
-              rowKeyRangeListBuilder_.dispose();
-              rowKeyRangeListBuilder_ = null;
-              rowKeyRangeList_ = other.rowKeyRangeList_;
+          if (!other.rowRangeList_.isEmpty()) {
+            if (rowRangeListBuilder_.isEmpty()) {
+              rowRangeListBuilder_.dispose();
+              rowRangeListBuilder_ = null;
+              rowRangeList_ = other.rowRangeList_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              rowKeyRangeListBuilder_ =
+              rowRangeListBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getRowKeyRangeListFieldBuilder() : null;
+                   getRowRangeListFieldBuilder() : null;
             } else {
-              rowKeyRangeListBuilder_.addAllMessages(other.rowKeyRangeList_);
+              rowRangeListBuilder_.addAllMessages(other.rowRangeList_);
             }
           }
         }
@@ -16869,244 +16869,244 @@ public final class FilterProtos {
       }
       private int bitField0_;
 
-      // repeated .RowKeyRange row_key_range_list = 1;
-      private java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange> rowKeyRangeList_ =
+      // repeated .RowRange row_range_list = 1;
+      private java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange> rowRangeList_ =
         java.util.Collections.emptyList();
-      private void ensureRowKeyRangeListIsMutable() {
+      private void ensureRowRangeListIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          rowKeyRangeList_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange>(rowKeyRangeList_);
+          rowRangeList_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange>(rowRangeList_);
           bitField0_ |= 0x00000001;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder> rowKeyRangeListBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder> rowRangeListBuilder_;
 
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange> getRowKeyRangeListList() {
-        if (rowKeyRangeListBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(rowKeyRangeList_);
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange> getRowRangeListList() {
+        if (rowRangeListBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(rowRangeList_);
         } else {
-          return rowKeyRangeListBuilder_.getMessageList();
+          return rowRangeListBuilder_.getMessageList();
         }
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public int getRowKeyRangeListCount() {
-        if (rowKeyRangeListBuilder_ == null) {
-          return rowKeyRangeList_.size();
+      public int getRowRangeListCount() {
+        if (rowRangeListBuilder_ == null) {
+          return rowRangeList_.size();
         } else {
-          return rowKeyRangeListBuilder_.getCount();
+          return rowRangeListBuilder_.getCount();
         }
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange getRowKeyRangeList(int index) {
-        if (rowKeyRangeListBuilder_ == null) {
-          return rowKeyRangeList_.get(index);
+      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange getRowRangeList(int index) {
+        if (rowRangeListBuilder_ == null) {
+          return rowRangeList_.get(index);
         } else {
-          return rowKeyRangeListBuilder_.getMessage(index);
+          return rowRangeListBuilder_.getMessage(index);
         }
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public Builder setRowKeyRangeList(
-          int index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange value) {
-        if (rowKeyRangeListBuilder_ == null) {
+      public Builder setRowRangeList(
+          int index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange value) {
+        if (rowRangeListBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          ensureRowKeyRangeListIsMutable();
-          rowKeyRangeList_.set(index, value);
+          ensureRowRangeListIsMutable();
+          rowRangeList_.set(index, value);
           onChanged();
         } else {
-          rowKeyRangeListBuilder_.setMessage(index, value);
+          rowRangeListBuilder_.setMessage(index, value);
         }
         return this;
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public Builder setRowKeyRangeList(
-          int index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder builderForValue) {
-        if (rowKeyRangeListBuilder_ == null) {
-          ensureRowKeyRangeListIsMutable();
-          rowKeyRangeList_.set(index, builderForValue.build());
+      public Builder setRowRangeList(
+          int index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder builderForValue) {
+        if (rowRangeListBuilder_ == null) {
+          ensureRowRangeListIsMutable();
+          rowRangeList_.set(index, builderForValue.build());
           onChanged();
         } else {
-          rowKeyRangeListBuilder_.setMessage(index, builderForValue.build());
+          rowRangeListBuilder_.setMessage(index, builderForValue.build());
         }
         return this;
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public Builder addRowKeyRangeList(org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange value) {
-        if (rowKeyRangeListBuilder_ == null) {
+      public Builder addRowRangeList(org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange value) {
+        if (rowRangeListBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          ensureRowKeyRangeListIsMutable();
-          rowKeyRangeList_.add(value);
+          ensureRowRangeListIsMutable();
+          rowRangeList_.add(value);
           onChanged();
         } else {
-          rowKeyRangeListBuilder_.addMessage(value);
+          rowRangeListBuilder_.addMessage(value);
         }
         return this;
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public Builder addRowKeyRangeList(
-          int index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange value) {
-        if (rowKeyRangeListBuilder_ == null) {
+      public Builder addRowRangeList(
+          int index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange value) {
+        if (rowRangeListBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          ensureRowKeyRangeListIsMutable();
-          rowKeyRangeList_.add(index, value);
+          ensureRowRangeListIsMutable();
+          rowRangeList_.add(index, value);
           onChanged();
         } else {
-          rowKeyRangeListBuilder_.addMessage(index, value);
+          rowRangeListBuilder_.addMessage(index, value);
         }
         return this;
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public Builder addRowKeyRangeList(
-          org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder builderForValue) {
-        if (rowKeyRangeListBuilder_ == null) {
-          ensureRowKeyRangeListIsMutable();
-          rowKeyRangeList_.add(builderForValue.build());
+      public Builder addRowRangeList(
+          org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder builderForValue) {
+        if (rowRangeListBuilder_ == null) {
+          ensureRowRangeListIsMutable();
+          rowRangeList_.add(builderForValue.build());
           onChanged();
         } else {
-          rowKeyRangeListBuilder_.addMessage(builderForValue.build());
+          rowRangeListBuilder_.addMessage(builderForValue.build());
         }
         return this;
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public Builder addRowKeyRangeList(
-          int index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder builderForValue) {
-        if (rowKeyRangeListBuilder_ == null) {
-          ensureRowKeyRangeListIsMutable();
-          rowKeyRangeList_.add(index, builderForValue.build());
+      public Builder addRowRangeList(
+          int index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder builderForValue) {
+        if (rowRangeListBuilder_ == null) {
+          ensureRowRangeListIsMutable();
+          rowRangeList_.add(index, builderForValue.build());
           onChanged();
         } else {
-          rowKeyRangeListBuilder_.addMessage(index, builderForValue.build());
+          rowRangeListBuilder_.addMessage(index, builderForValue.build());
         }
         return this;
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public Builder addAllRowKeyRangeList(
-          java.lang.Iterable<? extends org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange> values) {
-        if (rowKeyRangeListBuilder_ == null) {
-          ensureRowKeyRangeListIsMutable();
-          super.addAll(values, rowKeyRangeList_);
+      public Builder addAllRowRangeList(
+          java.lang.Iterable<? extends org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange> values) {
+        if (rowRangeListBuilder_ == null) {
+          ensureRowRangeListIsMutable();
+          super.addAll(values, rowRangeList_);
           onChanged();
         } else {
-          rowKeyRangeListBuilder_.addAllMessages(values);
+          rowRangeListBuilder_.addAllMessages(values);
         }
         return this;
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public Builder clearRowKeyRangeList() {
-        if (rowKeyRangeListBuilder_ == null) {
-          rowKeyRangeList_ = java.util.Collections.emptyList();
+      public Builder clearRowRangeList() {
+        if (rowRangeListBuilder_ == null) {
+          rowRangeList_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000001);
           onChanged();
         } else {
-          rowKeyRangeListBuilder_.clear();
+          rowRangeListBuilder_.clear();
         }
         return this;
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public Builder removeRowKeyRangeList(int index) {
-        if (rowKeyRangeListBuilder_ == null) {
-          ensureRowKeyRangeListIsMutable();
-          rowKeyRangeList_.remove(index);
+      public Builder removeRowRangeList(int index) {
+        if (rowRangeListBuilder_ == null) {
+          ensureRowRangeListIsMutable();
+          rowRangeList_.remove(index);
           onChanged();
         } else {
-          rowKeyRangeListBuilder_.remove(index);
+          rowRangeListBuilder_.remove(index);
         }
         return this;
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder getRowKeyRangeListBuilder(
+      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder getRowRangeListBuilder(
           int index) {
-        return getRowKeyRangeListFieldBuilder().getBuilder(index);
+        return getRowRangeListFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder getRowKeyRangeListOrBuilder(
+      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder getRowRangeListOrBuilder(
           int index) {
-        if (rowKeyRangeListBuilder_ == null) {
-          return rowKeyRangeList_.get(index);  } else {
-          return rowKeyRangeListBuilder_.getMessageOrBuilder(index);
+        if (rowRangeListBuilder_ == null) {
+          return rowRangeList_.get(index);  } else {
+          return rowRangeListBuilder_.getMessageOrBuilder(index);
         }
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder>
-           getRowKeyRangeListOrBuilderList() {
-        if (rowKeyRangeListBuilder_ != null) {
-          return rowKeyRangeListBuilder_.getMessageOrBuilderList();
+      public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder> 
+           getRowRangeListOrBuilderList() {
+        if (rowRangeListBuilder_ != null) {
+          return rowRangeListBuilder_.getMessageOrBuilderList();
         } else {
-          return java.util.Collections.unmodifiableList(rowKeyRangeList_);
+          return java.util.Collections.unmodifiableList(rowRangeList_);
         }
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder addRowKeyRangeListBuilder() {
-        return getRowKeyRangeListFieldBuilder().addBuilder(
-            org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.getDefaultInstance());
+      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder addRowRangeListBuilder() {
+        return getRowRangeListFieldBuilder().addBuilder(
+            org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.getDefaultInstance());
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder addRowKeyRangeListBuilder(
+      public org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder addRowRangeListBuilder(
           int index) {
-        return getRowKeyRangeListFieldBuilder().addBuilder(
-            index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.getDefaultInstance());
+        return getRowRangeListFieldBuilder().addBuilder(
+            index, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.getDefaultInstance());
       }
       /**
-       * <code>repeated .RowKeyRange row_key_range_list = 1;</code>
+       * <code>repeated .RowRange row_range_list = 1;</code>
        */
-      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder>
-           getRowKeyRangeListBuilderList() {
-        return getRowKeyRangeListFieldBuilder().getBuilderList();
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder>
+           getRowRangeListBuilderList() {
+        return getRowRangeListFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder>
-          getRowKeyRangeListFieldBuilder() {
-        if (rowKeyRangeListBuilder_ == null) {
-          rowKeyRangeListBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRange.Builder, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowKeyRangeOrBuilder>(
-                  rowKeyRangeList_,
+          org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder>
+          getRowRangeListFieldBuilder() {
+        if (rowRangeListBuilder_ == null) {
+          rowRangeListBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRange.Builder, org.apache.hadoop.hbase.protobuf.generated.FilterProtos.RowRangeOrBuilder>(
+                  rowRangeList_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
                   isClean());
-          rowKeyRangeList_ = null;
+          rowRangeList_ = null;
         }
-        return rowKeyRangeListBuilder_;
+        return rowRangeListBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:MultiRowRangeFilter)
@@ -17261,10 +17261,10 @@ public final class FilterProtos {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_FilterAllFilter_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_RowKeyRange_descriptor;
+    internal_static_RowRange_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_RowKeyRange_fieldAccessorTable;
+      internal_static_RowRange_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
     internal_static_MultiRowRangeFilter_descriptor;
   private static
@@ -17324,12 +17324,11 @@ public final class FilterProtos {
       "\022\026\n\ntimestamps\030\001 \003(\003B\002\020\001\"5\n\013ValueFilter\022" +
       "&\n\016compare_filter\030\001 \002(\0132\016.CompareFilter\"" +
       "+\n\020WhileMatchFilter\022\027\n\006filter\030\001 \002(\0132\007.Fi" +
-      "lter\"\021\n\017FilterAllFilter\"2\n\013RowKeyRange\022\021" +
-      "\n\tstart_row\030\001 \001(\014\022\020\n\010stop_row\030\002 \001(\014\"?\n\023M" +
-      "ultiRowRangeFilter\022(\n\022row_key_range_list" +
-      "\030\001 \003(\0132\014.RowKeyRangeBB\n*org.apache.hadoo" +
-      "p.hbase.protobuf.generatedB\014FilterProtos",
-      "H\001\210\001\001\240\001\001"
+      "lter\"\021\n\017FilterAllFilter\"/\n\010RowRange\022\021\n\ts" +
+      "tart_row\030\001 \001(\014\022\020\n\010stop_row\030\002 \001(\014\"8\n\023Mult" +
+      "iRowRangeFilter\022!\n\016row_range_list\030\001 \003(\0132" +
+      "\t.RowRangeBB\n*org.apache.hadoop.hbase.pr" +
+      "otobuf.generatedB\014FilterProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -17504,18 +17503,18 @@ public final class FilterProtos {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_FilterAllFilter_descriptor,
               new java.lang.String[] { });
-          internal_static_RowKeyRange_descriptor =
+          internal_static_RowRange_descriptor =
             getDescriptor().getMessageTypes().get(28);
-          internal_static_RowKeyRange_fieldAccessorTable = new
+          internal_static_RowRange_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_RowKeyRange_descriptor,
+              internal_static_RowRange_descriptor,
               new java.lang.String[] { "StartRow", "StopRow", });
           internal_static_MultiRowRangeFilter_descriptor =
             getDescriptor().getMessageTypes().get(29);
           internal_static_MultiRowRangeFilter_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_MultiRowRangeFilter_descriptor,
-              new java.lang.String[] { "RowKeyRangeList", });
+              new java.lang.String[] { "RowRangeList", });
           return null;
         }
       };

@@ -157,11 +157,11 @@ message WhileMatchFilter {
 message FilterAllFilter {
 }
 
-message RowKeyRange {
+message RowRange {
   optional bytes start_row = 1;
   optional bytes stop_row = 2;
 }
 
 message MultiRowRangeFilter {
-  repeated RowKeyRange row_key_range_list = 1;
+  repeated RowRange row_range_list = 1;
 }
