@@ -362,6 +362,10 @@ module Hbase
       @admin.getTableDescriptor(TableName.valueOf(table_name)).getColumnFamilies()
     end
 
+    def get_table_attributes(table_name)
+      @admin.getTableDescriptor(TableName.valueOf(table_name)).toStringTableAttributes
+    end
+
     #----------------------------------------------------------------------------------------------
     # Truncates table (deletes all records by recreating the table)
     def truncate(table_name, conf = @conf)
@@ -394,8 +398,8 @@ module Hbase
     # Truncates table while maintaing region boundaries (deletes all records by recreating the table)
     def truncate_preserve(table_name, conf = @conf)
       h_table = @conn.getTable(table_name)
-      splits = h_table.getRegionLocations().keys().map{|i| Bytes.toString(i.getStartKey)}.delete_if{|k| k == ""}.to_java :String
-      splits = org.apache.hadoop.hbase.util.Bytes.toByteArrays(splits)
+      splits = h_table.getRegionLocations().keys().map{|i| Bytes.toStringBinary(i.getStartKey)}.delete_if{|k| k == ""}.to_java :String
+      splits = org.apache.hadoop.hbase.util.Bytes.toBinaryByteArrays(splits)
       table_description = h_table.getTableDescriptor()
       yield 'Disabling table...' if block_given?
       disable(table_name)
