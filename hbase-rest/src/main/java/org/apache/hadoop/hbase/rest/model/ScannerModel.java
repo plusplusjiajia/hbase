@@ -300,7 +300,7 @@ public class ScannerModel implements ProtobufMessageHandler, Serializable {
         case MultiRowRangeFilter:
           this.ranges = new ArrayList<RowRange>();
           for(RowRange range : ((MultiRowRangeFilter)filter).getRowRanges()) {
-            ranges.add(new RowRange(range.getStartRow(), range.isStartRowInclusive(),
+            this.ranges.add(new RowRange(range.getStartRow(), range.isStartRowInclusive(),
                 range.getStopRow(), range.isStopRowInclusive()));
           }
           break;
@@ -406,13 +406,8 @@ public class ScannerModel implements ProtobufMessageHandler, Serializable {
         filter = new MultipleColumnPrefixFilter(values);
       } break;
       case MultiRowRangeFilter: {
-        List<RowRange> values = new ArrayList<RowRange>(ranges.size());
-        for (int i = 0; i < ranges.size(); i++) {
-          values.add(new RowRange(ranges.get(i).getStartRow(), ranges.get(i).isStartRowInclusive(),
-              ranges.get(i).getStopRow(), ranges.get(i).isStopRowInclusive()));
-        }
         try {
-          filter = new MultiRowRangeFilter(values);
+          filter = new MultiRowRangeFilter(ranges);
         } catch (IOException e) {
           throw new RuntimeException(e);
         }

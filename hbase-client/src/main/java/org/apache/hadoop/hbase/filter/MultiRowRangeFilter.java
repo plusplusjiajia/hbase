@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
+import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValueUtil;
@@ -56,7 +57,7 @@ public class MultiRowRangeFilter extends FilterBase {
   private List<RowRange> rangeList;
 
   private static final int ROW_BEFORE_FIRST_RANGE = -1;
-  private static boolean EXCLUSIVE = false;
+  private boolean EXCLUSIVE = false;
   private boolean done = false;
   private boolean initialized = false;
   private int index;
@@ -495,7 +496,7 @@ public class MultiRowRangeFilter extends FilterBase {
 
     @Override
     public int compareTo(RowRange other) {
-      return Bytes.compareTo(startRow, other.startRow);
+      return Bytes.compareTo(this.startRow, other.startRow);
     }
 
     public boolean isValid() {
