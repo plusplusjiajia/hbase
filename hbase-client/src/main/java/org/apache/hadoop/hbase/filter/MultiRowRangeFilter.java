@@ -419,6 +419,8 @@ public class MultiRowRangeFilter extends FilterBase {
     private boolean stopRowInclusive = false;
     private int isScan = 0;
 
+    public RowRange() {
+    }
     /**
      * If the startRow is empty or null, set it to HConstants.EMPTY_BYTE_ARRAY, means begin at the
      * start row of the table. If the stopRow is empty or null, set it to
