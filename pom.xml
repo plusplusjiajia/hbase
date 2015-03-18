@@ -1127,11 +1127,11 @@
       yyyy-MM-dd'T'HH:mm
     </maven.build.timestamp.format>
     <buildDate>${maven.build.timestamp}</buildDate>
-    <compileSource>1.8</compileSource>
+    <compileSource>1.7</compileSource>
     <!-- Build dependencies -->
     <maven.min.version>3.0.3</maven.min.version>
     <java.min.version>${compileSource}</java.min.version>
-    <!--java.default.compiler>javac-with-errorprone</java.default.compiler-->
+    <java.default.compiler>javac-with-errorprone</java.default.compiler>
     <!-- Dependencies -->
     <hadoop-two.version>2.5.1</hadoop-two.version>
     <hadoop-three.version>3.0.0-SNAPSHOT</hadoop-three.version>
