@@ -18,6 +18,15 @@
 
 package org.apache.hadoop.hbase.http.ssl;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -31,31 +40,36 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
+import java.io.ByteArrayInputStream;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.security.KeyFactory;
+
+import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.ssl.FileBasedKeyStoresFactory;
 import org.apache.hadoop.security.ssl.SSLFactory;
 
-import sun.security.x509.AlgorithmId;
-import sun.security.x509.CertificateAlgorithmId;
-import sun.security.x509.CertificateIssuerName;
-import sun.security.x509.CertificateSerialNumber;
-import sun.security.x509.CertificateSubjectName;
-import sun.security.x509.CertificateValidity;
-import sun.security.x509.CertificateVersion;
-import sun.security.x509.CertificateX509Key;
-import sun.security.x509.X500Name;
-import sun.security.x509.X509CertImpl;
-import sun.security.x509.X509CertInfo;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.security.PublicKey;
 
 public class KeyStoreTestUtil {
+
+  public static final Log LOG =
+      LogFactory.getLog(KeyStoreTestUtil.class);
 
   public static String getClasspathDir(Class klass) throws Exception {
     String file = klass.getName();
@@ -68,50 +82,26 @@ public class KeyStoreTestUtil {
 
   /**
    * Create a self-signed X.509 Certificate.
-   * From http://bfo.com/blog/2011/03/08/odds_and_ends_creating_a_new_x_509_certificate.html.
-   *
-   * @param dn the X.509 Distinguished Name, eg "CN=Test, L=London, C=GB"
-   * @param pair the KeyPair
-   * @param days how many days from now the Certificate is valid for
-   * @param algorithm the signing algorithm, eg "SHA1withRSA"
+   * @param path certificate file
    * @return the self-signed certificate
    * @throws IOException thrown if an IO error ocurred.
    * @throws GeneralSecurityException thrown if an Security error ocurred.
+   * @throws FileNotFoundException.
    */
-  public static X509Certificate generateCertificate(String dn, KeyPair pair,
-                                                    int days, String algorithm)
-    throws GeneralSecurityException, IOException {
-    PrivateKey privkey = pair.getPrivate();
-    X509CertInfo info = new X509CertInfo();
-    Date from = new Date();
-    Date to = new Date(from.getTime() + days * 86400000l);
-    CertificateValidity interval = new CertificateValidity(from, to);
-    BigInteger sn = new BigInteger(64, new SecureRandom());
-    X500Name owner = new X500Name(dn);
 
-    info.set(X509CertInfo.VALIDITY, interval);
-    info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(sn));
-    info.set(X509CertInfo.SUBJECT, new CertificateSubjectName(owner));
-    info.set(X509CertInfo.ISSUER, new CertificateIssuerName(owner));
-    info.set(X509CertInfo.KEY, new CertificateX509Key(pair.getPublic()));
-    info
-      .set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
-    AlgorithmId algo = new AlgorithmId(AlgorithmId.md5WithRSAEncryption_oid);
-    info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
-
-    // Sign the cert to identify the algorithm that's used.
-    X509CertImpl cert = new X509CertImpl(info);
-    cert.sign(privkey, algorithm);
-
-    // Update the algorith, and resign.
-    algo = (AlgorithmId) cert.get(X509CertImpl.SIG_ALG);
-    info
-      .set(CertificateAlgorithmId.NAME + "." + CertificateAlgorithmId.ALGORITHM,
-           algo);
-    cert = new X509CertImpl(info);
-    cert.sign(privkey, algorithm);
-    return cert;
-  }
+  public static X509Certificate generateCertificate(String certFileName)
+            throws IOException, GeneralSecurityException, FileNotFoundException
+    {
+      FileInputStream input=null;
+      try {
+      String pathCrtFile = Thread.currentThread().
+	          getContextClassLoader().getResource(certFileName).getPath();
+      input=new FileInputStream(pathCrtFile);
+      CertificateFactory cf=CertificateFactory.getInstance("X.509");
+      return (X509Certificate)cf.generateCertificate(input); }
+      finally {
+      input.close(); }
+    }
 
   public static KeyPair generateKeyPair(String algorithm)
     throws NoSuchAlgorithmException {
@@ -232,21 +222,21 @@ public class KeyStoreTestUtil {
     Map<String, X509Certificate> certs = new HashMap<String, X509Certificate>();
 
     if (useClientCert) {
-      KeyPair cKP = KeyStoreTestUtil.generateKeyPair("RSA");
+      //use test certicat file from src/test/resources/client_crt
       X509Certificate cCert =
-        KeyStoreTestUtil.generateCertificate("CN=localhost, O=client", cKP, 30,
-                                             "SHA1withRSA");
+      KeyStoreTestUtil.generateCertificate("client_crt");
+      //use test key file from src/test/resources/client_pkcs8
       KeyStoreTestUtil.createKeyStore(clientKS, clientPassword, "client",
-                                      cKP.getPrivate(), cCert);
+              KeyStoreTestUtil.getPrivateFromFile("client_pkcs8"), cCert);
       certs.put("client", cCert);
     }
 
-    KeyPair sKP = KeyStoreTestUtil.generateKeyPair("RSA");
+    //use test certicat file from src/test/resources/server_crt
     X509Certificate sCert =
-      KeyStoreTestUtil.generateCertificate("CN=localhost, O=server", sKP, 30,
-                                           "SHA1withRSA");
+      KeyStoreTestUtil.generateCertificate("server_crt");
+    //use test key file from src/test/resources/server_pkcs8
     KeyStoreTestUtil.createKeyStore(serverKS, serverPassword, "server",
-                                    sKP.getPrivate(), sCert);
+              KeyStoreTestUtil.getPrivateFromFile("server_pkcs8") , sCert);
     certs.put("server", sCert);
 
     KeyStoreTestUtil.createTrustStore(trustKS, trustPassword, certs);
@@ -361,5 +351,25 @@ public class KeyStoreTestUtil {
     } finally {
       writer.close();
     }
+  }
+
+  private static Key getPrivateFromFile(String filename)
+      throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, FileNotFoundException {
+        String pathfile = Thread.currentThread().
+                  getContextClassLoader().getResource(filename).getPath();
+        File privKeyFile = new File(pathfile);
+        RSAPrivateKey privKey = null;
+        BufferedInputStream bis = null;
+        try {
+          bis = new BufferedInputStream(new FileInputStream(privKeyFile));
+          byte[] privKeyBytes = new byte[(int)privKeyFile.length()];
+          bis.read(privKeyBytes);
+          KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+          KeySpec ks = new PKCS8EncodedKeySpec(privKeyBytes);
+          privKey = (RSAPrivateKey) keyFactory.generatePrivate(ks);
+	  return (Key)privKey;
+        }
+      finally {
+      bis.close(); }
   }
 }
